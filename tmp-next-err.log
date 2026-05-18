@@ -1,0 +1,9 @@
+⚠ Port 3000 is in use by process 9440, using available port 3001 instead.
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          9440
+- Dir:          D:\sources\projects\ecommerce-flash-sale\ecommerce-frontend-nextjs
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 9440 /F to stop it.
