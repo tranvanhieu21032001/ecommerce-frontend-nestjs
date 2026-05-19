@@ -5,16 +5,20 @@
   --foreground: #171717;
   --color-maintext: #253d4e;
   --color-subtext: #8d8d8d;
-  --color-primary: #34d399;
+  --color-primary: #158947;
+  --color-secondary: #4ea674;
   --color-danger: #fb7181;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans:
-    "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --color-maintext: var(--color-maintext);
+  --color-subtext: var(--color-subtext);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-lato);
   --font-mono:
     "SF Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
@@ -29,11 +33,5 @@
 body {
   background: var(--background);
   color: var(--color-maintext);
-  font-family:
-    "SF Pro Display",
-    "SF Pro Text",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-lato), sans-serif;
 }

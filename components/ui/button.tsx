@@ -12,7 +12,7 @@ const baseStyles =
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-[#0B2C91] text-white hover:bg-[#082676] focus-visible:ring-[#0088FF]",
+    "bg-primary text-white hover:bg-secondary focus-visible:ring-[#0088FF]",
   default:
     "border border-[#E5E7EB] bg-transparent text-[#1B3268] hover:bg-[#F8FAFC] focus-visible:ring-[#0088FF]",
   danger:
@@ -26,11 +26,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={cn(
-        baseStyles,
-        variantStyles[variant],
-        className,
-      )}
+      className={cn(baseStyles, variantStyles[variant], className)}
       {...props}
     />
   );

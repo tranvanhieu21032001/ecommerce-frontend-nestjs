@@ -100,12 +100,18 @@ export function AuthForm({ mode }: AuthFormProps) {
       setIsSubmitting(true);
 
       if (mode === "register") {
-        await register({ firstName, lastName, email, password });
+        const response = await register({
+          firstName,
+          lastName,
+          email,
+          password,
+        });
+        router.replace(response.user.role === "ADMIN" ? "/dashboard" : "/");
       } else {
-        await login({ email, password });
+        const response = await login({ email, password });
+        router.replace(response.user.role === "ADMIN" ? "/dashboard" : "/");
       }
       form.reset();
-      router.replace("/");
     } catch (error) {
       setErrors({
         form:
@@ -120,7 +126,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <section className="grid min-h-[680px] w-full max-w-[1080px] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.10)] lg:grid-cols-[1.05fr_0.95fr]">
-      <div className="hidden bg-[#0B2C91] px-14 py-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <div className="hidden bg-primary px-14 py-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-xl bg-white">
             <Image
