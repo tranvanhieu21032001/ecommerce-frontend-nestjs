@@ -49,12 +49,12 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Brand",
-        href: "#",
+        href: "/dashboard/brands",
         icon: () => <SidebarSvgIcon src="/icons/brand.svg" />,
       },
       {
         label: "Tags",
-        href: "#",
+        href: "/dashboard/tags",
         icon: () => <SidebarSvgIcon src="/icons/tag.svg" />,
       },
     ],

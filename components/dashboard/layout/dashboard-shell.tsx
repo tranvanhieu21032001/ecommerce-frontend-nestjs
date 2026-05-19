@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
 import { DashboardSidebar } from "./dashboard-sidebar";
@@ -12,6 +12,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +64,13 @@ export function DashboardShell({ children }: DashboardShellProps) {
     }
   }
 
+  const pageTitle =
+    pathname === "/dashboard/tags"
+      ? "Tags"
+      : pathname === "/dashboard/brands"
+        ? "Brands"
+        : "Dashboard";
+
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F5F7FB] px-6 py-10">
@@ -94,12 +102,16 @@ export function DashboardShell({ children }: DashboardShellProps) {
               Admin area
             </p>
             <h1 className="mt-1 text-[22px] font-bold text-[#1B3268]">
-              {children ? "Dashboard" : "Dashboard"}
+              {pageTitle}
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="default" className="w-auto px-4" onClick={() => router.push("/")}>
+            <Button
+              variant="default"
+              className="w-auto px-4"
+              onClick={() => router.push("/")}
+            >
               View site
             </Button>
             <Button

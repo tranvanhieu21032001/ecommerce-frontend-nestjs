@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8800";
+import { apiRequest } from "@/lib/api/client";
 
 export type LoginPayload = {
   email: string;
@@ -31,69 +30,31 @@ export type AuthResponse = {
   user: AuthUser;
 };
 
-function getErrorMessage(data: unknown) {
-  if (!data || typeof data !== "object" || !("message" in data)) {
-    return "Request failed. Please try again.";
-  }
-
-  const message = (data as { message?: unknown }).message;
-
-  if (typeof message === "string") {
-    return message;
-  }
-
-  if (Array.isArray(message)) {
-    return message.filter((item): item is string => typeof item === "string").join(", ");
-  }
-
-  return "Request failed. Please try again.";
-}
-
-async function request<TResponse>(
-  path: string,
-  options: {
-    method?: "GET" | "POST" | "PATCH" | "DELETE";
-    body?: Record<string, unknown>;
-  } = {},
-): Promise<TResponse> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method ?? "POST",
-    credentials: "include",
-    headers: options.body ? { "Content-Type": "application/json" } : undefined,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data));
-  }
-
-  return data as TResponse;
-}
-
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
-  return request<AuthResponse>("/api/v1/auth/login", {
+  return apiRequest<AuthResponse>("/api/v1/auth/login", {
     method: "POST",
     body: payload,
+    skipAuthRefresh: true,
   });
 }
 
 export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  return request<AuthResponse>("/api/v1/auth/register", {
+  return apiRequest<AuthResponse>("/api/v1/auth/register", {
     method: "POST",
     body: payload,
+    skipAuthRefresh: true,
   });
 }
 
 export async function logout(): Promise<{ status: boolean; message: string }> {
-  return request<{ status: boolean; message: string }>("/api/v1/auth/logout", {
+  return apiRequest<{ status: boolean; message: string }>("/api/v1/auth/logout", {
     method: "POST",
+    skipAuthRefresh: true,
   });
 }
 
 export async function getCurrentUser(): Promise<AuthUser> {
-  const response = await request<{ status: boolean; message: string; user: AuthUser }>(
+  const response = await apiRequest<{ status: boolean; message: string; user: AuthUser }>(
     "/api/v1/auth/me",
     { method: "GET" },
   );
