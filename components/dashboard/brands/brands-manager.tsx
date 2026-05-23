@@ -8,6 +8,11 @@ import {
   DashboardTable,
   DashboardTableRow,
 } from "@/components/dashboard/shared/dashboard-table";
+import { DashboardStat } from "@/components/dashboard/shared/dashboard-stat";
+import {
+  StatusFilterTabs,
+  type StatusFilter,
+} from "@/components/dashboard/shared/status-filter-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
@@ -22,8 +27,6 @@ import {
 } from "@/lib/api/brands";
 import { uploadImage } from "@/lib/api/uploads";
 import { cn } from "@/lib/cn";
-
-type StatusFilter = "all" | "active" | "inactive";
 
 type FormState = {
   name: string;
@@ -55,6 +58,7 @@ export function BrandsManager() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedBrands, setHasLoadedBrands] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
@@ -76,6 +80,7 @@ export function BrandsManager() {
 
   useEffect(() => {
     loadBrands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, statusFilter, page]);
 
   useEffect(() => {
@@ -106,6 +111,7 @@ export function BrandsManager() {
         err instanceof Error ? err.message : "Could not load brands.",
       );
     } finally {
+      setHasLoadedBrands(true);
       setIsLoading(false);
     }
   }
@@ -258,9 +264,9 @@ export function BrandsManager() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Stat label="Total" value={totalBrands} />
-            <Stat label="Active" value={activeCount} />
-            <Stat label="Page" value={page} />
+            <DashboardStat label="Total" value={totalBrands} />
+            <DashboardStat label="Active" value={activeCount} />
+            <DashboardStat label="Page" value={page} />
           </div>
         </div>
 
@@ -272,26 +278,13 @@ export function BrandsManager() {
             placeholder="Search by name or description"
           />
 
-          <div className="flex items-center gap-1 pt-[29px]">
-            {(["all", "active", "inactive"] as StatusFilter[]).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => {
-                  setStatusFilter(status);
-                  setPage(1);
-                }}
-                className={cn(
-                  "h-[44px] rounded-lg px-4 text-[13px] font-semibold capitalize transition-colors",
-                  statusFilter === status
-                    ? "bg-[#F0FDF4] text-[color:var(--color-primary)]"
-                    : "text-[#6B7280] hover:bg-[#F8FAFC] hover:text-[#1F2937]",
-                )}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+          <StatusFilterTabs
+            value={statusFilter}
+            onChange={(status) => {
+              setStatusFilter(status);
+              setPage(1);
+            }}
+          />
         </div>
 
         <DashboardTable
@@ -308,7 +301,7 @@ export function BrandsManager() {
           ]}
           hasData={brands.length > 0}
           isLoading={isLoading}
-          minWidth={860}
+          showSkeleton={isLoading && !hasLoadedBrands}
           emptyState={
             <div className="flex min-h-[240px] flex-col items-center justify-center px-4 py-10 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF7EF] text-[color:var(--color-primary)]">
@@ -324,11 +317,7 @@ export function BrandsManager() {
           }
         >
           {brands.map((brand) => (
-            <DashboardTableRow
-              key={brand.id}
-              columns={tableColumns}
-              minWidth={860}
-            >
+            <DashboardTableRow key={brand.id} columns={tableColumns}>
               <BrandLogo brand={brand} />
               <div className="min-w-0">
                 <button
@@ -381,7 +370,7 @@ export function BrandsManager() {
           <Pagination
             currentPage={page}
             totalPages={totalPages}
-            disabled={isLoading}
+            disabled={isLoading && !hasLoadedBrands}
             onPageChange={setPage}
           />
         </div>
@@ -559,17 +548,6 @@ function BrandLogo({ brand }: { brand: Brand }) {
       ) : (
         <SvgIcon src="/icons/brand.svg" size={22} />
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="min-w-[92px] rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3">
-      <p className="text-[11px] font-semibold text-[#7C8794]">{label}</p>
-      <p className="mt-1 text-[22px] font-black text-[color:var(--color-maintext)]">
-        {value}
-      </p>
     </div>
   );
 }

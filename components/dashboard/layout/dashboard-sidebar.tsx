@@ -29,7 +29,7 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Customers",
-        href: "#",
+        href: "/dashboard/users",
         icon: () => <SidebarSvgIcon src="/icons/customer.svg" />,
       },
       {
@@ -39,7 +39,7 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Categories",
-        href: "#",
+        href: "/dashboard/categories",
         icon: () => <SidebarSvgIcon src="/icons/categories.svg" />,
       },
       {
@@ -56,6 +56,11 @@ const sidebarSections: SidebarGroup[] = [
         label: "Tags",
         href: "/dashboard/tags",
         icon: () => <SidebarSvgIcon src="/icons/tag.svg" />,
+      },
+      {
+        label: "Variants",
+        href: "/dashboard/variants",
+        icon: () => <SidebarSvgIcon src="/icons/variant.svg" />,
       },
     ],
   },

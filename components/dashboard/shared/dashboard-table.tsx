@@ -12,6 +12,7 @@ type DashboardTableProps = {
   hasData: boolean;
   isLoading: boolean;
   minWidth?: number;
+  showSkeleton?: boolean;
   skeletonRows?: number;
 };
 
@@ -23,6 +24,7 @@ export function DashboardTable({
   hasData,
   isLoading,
   minWidth = 760,
+  showSkeleton = isLoading && !hasData,
   skeletonRows = 4,
 }: DashboardTableProps) {
   const gridStyle = {
@@ -46,7 +48,7 @@ export function DashboardTable({
         ))}
       </div>
 
-      {isLoading && !hasData ? (
+      {showSkeleton ? (
         <div className="grid gap-3 p-4">
           {Array.from({ length: skeletonRows }).map((_, index) => (
             <div

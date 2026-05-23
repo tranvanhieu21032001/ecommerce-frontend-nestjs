@@ -69,7 +69,11 @@ export function DashboardShell({ children }: DashboardShellProps) {
       ? "Tags"
       : pathname === "/dashboard/brands"
         ? "Brands"
-        : "Dashboard";
+        : pathname === "/dashboard/categories"
+          ? "Categories"
+          : pathname === "/dashboard/variants"
+            ? "Variants"
+            : "Dashboard";
 
   if (isLoading) {
     return (
