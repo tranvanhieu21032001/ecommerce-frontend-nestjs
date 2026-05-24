@@ -47,14 +47,20 @@ export function buildFormFromVariant(variant: Variant): VariantGroupForm {
 
   return {
     name: name || variant.name,
-    options: [
-      {
-        id: crypto.randomUUID(),
-        value: value || variant.name,
-        colorCode: getVariantColorCode(variant) || "#000000",
-        isActive: variant.isActive,
-      },
-    ],
+    options: [buildOptionFromVariant(variant, value || variant.name)],
+  };
+}
+
+export function buildFormFromVariantGroup(
+  name: string,
+  variants: Variant[],
+): VariantGroupForm {
+  return {
+    name,
+    options: variants.map((variant) => {
+      const [, value] = getVariantAttribute(variant);
+      return buildOptionFromVariant(variant, value || variant.name);
+    }),
   };
 }
 
@@ -107,4 +113,17 @@ export function groupVariants(variants: Variant[]) {
 
 function isHexColor(value: string) {
   return /^#[0-9A-Fa-f]{6}$/.test(value);
+}
+
+function buildOptionFromVariant(
+  variant: Variant,
+  value: string,
+): VariantOptionForm {
+  return {
+    id: crypto.randomUUID(),
+    variantId: variant.id,
+    value,
+    colorCode: getVariantColorCode(variant) || "#000000",
+    isActive: variant.isActive,
+  };
 }

@@ -19,7 +19,7 @@ type VariantsTableProps = {
   variants: Variant[];
   isLoading: boolean;
   deletingId: string | null;
-  onEdit: (variant: Variant) => void;
+  onEditGroup: (name: string, variants: Variant[]) => void;
   onDelete: (variant: Variant) => void;
 };
 
@@ -27,7 +27,7 @@ export function VariantsTable({
   variants,
   isLoading,
   deletingId,
-  onEdit,
+  onEditGroup,
   onDelete,
 }: VariantsTableProps) {
   const groups = groupVariants(variants);
@@ -72,12 +72,20 @@ export function VariantsTable({
               columns={tableColumns}
               minWidth={720}
             >
-              <span className="font-bold text-[color:var(--color-maintext)]">
-                {index === 0 ? group.name : ""}
-              </span>
+              {index === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => onEditGroup(group.name, group.items)}
+                  className="max-w-full truncate text-left font-bold text-[color:var(--color-maintext)] transition-colors hover:text-[color:var(--color-primary)] focus:outline-none focus-visible:text-[color:var(--color-primary)]"
+                >
+                  {group.name}
+                </button>
+              ) : (
+                <span />
+              )}
               <button
                 type="button"
-                onClick={() => onEdit(variant)}
+                onClick={() => onEditGroup(group.name, group.items)}
                 className="flex max-w-full items-center gap-2 truncate text-left font-bold text-[color:var(--color-maintext)] transition-colors hover:text-[color:var(--color-primary)] focus:outline-none focus-visible:text-[color:var(--color-primary)]"
               >
                 {shouldShowColor ? (

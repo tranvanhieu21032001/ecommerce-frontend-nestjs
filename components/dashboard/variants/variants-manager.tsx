@@ -22,7 +22,7 @@ import {
 import { VariantOptionsForm } from "./variant-options-form";
 import type { VariantGroupForm, VariantOptionForm } from "./variant-types";
 import {
-  buildFormFromVariant,
+  buildFormFromVariantGroup,
   buildPayloads,
   createEmptyForm,
   createOption,
@@ -40,7 +40,7 @@ export function VariantsManager() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalVariants, setTotalVariants] = useState(0);
   const [form, setForm] = useState<VariantGroupForm>(createEmptyForm());
-  const [editingVariant, setEditingVariant] = useState<Variant | null>(null);
+  const [editingVariants, setEditingVariants] = useState<Variant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -126,13 +126,13 @@ export function VariantsManager() {
     });
   }
 
-  function handleEdit(variant: Variant) {
-    setEditingVariant(variant);
-    setForm(buildFormFromVariant(variant));
+  function handleEditGroup(name: string, variants: Variant[]) {
+    setEditingVariants(variants);
+    setForm(buildFormFromVariantGroup(name, variants));
   }
 
   function resetForm() {
-    setEditingVariant(null);
+    setEditingVariants([]);
     setForm(createEmptyForm());
   }
 
@@ -147,9 +147,37 @@ export function VariantsManager() {
     setIsSaving(true);
 
     try {
-      if (editingVariant) {
-        await updateVariant(editingVariant.id, payloads[0]);
-        toast.success("Variant option updated successfully.");
+      if (editingVariants.length > 0) {
+        const existingIds = new Set(
+          editingVariants.map((variant) => variant.id),
+        );
+        const retainedIds = new Set(
+          form.options
+            .map((option) => option.variantId)
+            .filter((id): id is string => Boolean(id)),
+        );
+
+        await Promise.all(
+          form.options
+            .filter((option) => option.value.trim())
+            .map((option, index) => {
+              const payload = payloads[index];
+
+              if (option.variantId) {
+                return updateVariant(option.variantId, payload);
+              }
+
+              return createVariant(payload);
+            }),
+        );
+
+        await Promise.all(
+          Array.from(existingIds)
+            .filter((id) => !retainedIds.has(id))
+            .map((id) => deleteVariant(id)),
+        );
+
+        toast.success("Variant updated successfully.");
       } else {
         await Promise.all(payloads.map((payload) => createVariant(payload)));
         toast.success("Variant options created successfully.");
@@ -222,7 +250,11 @@ export function VariantsManager() {
       const optionValue = option.value.trim().toLowerCase();
 
       return variants.some((variant) => {
-        if (editingVariant?.id === variant.id) {
+        if (
+          editingVariants.some(
+            (editingVariant) => editingVariant.id === variant.id,
+          )
+        ) {
           return false;
         }
 
@@ -285,7 +317,7 @@ export function VariantsManager() {
           variants={variants}
           isLoading={isLoading}
           deletingId={deletingId}
-          onEdit={handleEdit}
+          onEditGroup={handleEditGroup}
           onDelete={handleDelete}
         />
 
@@ -304,7 +336,7 @@ export function VariantsManager() {
 
       <VariantOptionsForm
         form={form}
-        editingVariant={editingVariant}
+        editingVariants={editingVariants}
         isSaving={isSaving}
         onChange={updateForm}
         onOptionChange={updateOption}

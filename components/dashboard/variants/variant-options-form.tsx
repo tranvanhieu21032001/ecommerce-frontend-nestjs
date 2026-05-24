@@ -10,7 +10,7 @@ import { isColorVariantName } from "./variant-utils";
 
 type VariantOptionsFormProps = {
   form: VariantGroupForm;
-  editingVariant: Variant | null;
+  editingVariants: Variant[];
   isSaving: boolean;
   onChange: (patch: Partial<VariantGroupForm>) => void;
   onOptionChange: (id: string, patch: Partial<VariantOptionForm>) => void;
@@ -22,7 +22,7 @@ type VariantOptionsFormProps = {
 
 export function VariantOptionsForm({
   form,
-  editingVariant,
+  editingVariants,
   isSaving,
   onChange,
   onOptionChange,
@@ -32,19 +32,20 @@ export function VariantOptionsForm({
   onSubmit,
 }: VariantOptionsFormProps) {
   const isColorVariant = isColorVariantName(form.name);
+  const isEditing = editingVariants.length > 0;
 
   return (
     <aside className="rounded-[20px] border border-[#E5E7EB] bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)] lg:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-subtext)]">
-            {editingVariant ? "Edit option" : "New variant"}
+            {isEditing ? "Edit variant" : "New variant"}
           </p>
           <h3 className="mt-1 text-[20px] font-black text-[color:var(--color-maintext)]">
-            {editingVariant ? editingVariant.name : "Add options"}
+            {isEditing ? form.name : "Add options"}
           </h3>
         </div>
-        {editingVariant ? (
+        {isEditing ? (
           <button
             type="button"
             onClick={onReset}
@@ -71,26 +72,27 @@ export function VariantOptionsForm({
               <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#7C8794]">
                 Options
               </p>
+              <p className="mt-1 text-[12px] font-medium text-[#94A3B8]">
+                {form.options.length} item{form.options.length > 1 ? "s" : ""}
+              </p>
             </div>
-            {!editingVariant ? (
-              <button
-                type="button"
-                onClick={onAddOption}
-                className="h-9 rounded-lg border border-[#D1FAE5] bg-white px-3 text-[12px] font-bold text-[color:var(--color-primary)] transition-colors hover:bg-[#ECFDF5]"
-              >
-                Add option
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={onAddOption}
+              className="h-9 rounded-lg border border-[#D1FAE5] bg-white px-3 text-[12px] font-bold text-[color:var(--color-primary)] transition-colors hover:bg-[#ECFDF5]"
+            >
+              Add option
+            </button>
           </div>
 
-          <div className="mt-3 grid gap-3">
+          <div className="mt-3 grid max-h-[430px] gap-2 overflow-y-auto pr-1">
             {form.options.map((option, index) => (
               <OptionRow
                 key={option.id}
                 option={option}
                 index={index}
                 isColorVariant={isColorVariant}
-                canRemove={!editingVariant && form.options.length > 1}
+                canRemove={form.options.length > 1}
                 onChange={(patch) => onOptionChange(option.id, patch)}
                 onRemove={() => onRemoveOption(option.id)}
               />
@@ -101,8 +103,8 @@ export function VariantOptionsForm({
         <Button type="submit" variant="primary" disabled={isSaving}>
           {isSaving
             ? "Saving..."
-            : editingVariant
-              ? "Update option"
+            : isEditing
+              ? "Update variant"
               : "Create options"}
         </Button>
       </form>
@@ -126,63 +128,86 @@ function OptionRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-3">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="text-[12px] font-bold text-[#7C8794]">
-          Option {index + 1}
+    <div className="rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="shrink-0 text-[12px] font-bold text-[#7C8794]">
+          #{index + 1}
         </span>
-        {canRemove ? (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#FECACA] text-[#E11D48] transition-colors hover:bg-[#FFF1F2]"
-            aria-label="Remove option"
-            title="Remove"
-          >
-            <SvgIcon src="/icons/trash.svg" size={16} />
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-[12px] font-bold text-[#475569]">
+            <input
+              type="checkbox"
+              checked={option.isActive}
+              onChange={(event) => onChange({ isActive: event.target.checked })}
+              className="h-4 w-4 accent-[color:var(--color-primary)]"
+            />
+            Active
+          </label>
+          {canRemove ? (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#FECACA] text-[#E11D48] transition-colors hover:bg-[#FFF1F2]"
+              aria-label="Remove option"
+              title="Remove"
+            >
+              <SvgIcon src="/icons/trash.svg" size={15} />
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <Input
+      <CompactField
         label={isColorVariant ? "Color name" : "Option value"}
-        isRequired
         value={option.value}
-        onChange={(event) => onChange({ value: event.target.value })}
+        onChange={(value) => onChange({ value })}
         placeholder={isColorVariant ? "Black, Red, Blue" : "S, M, L"}
-        maxLength={80}
       />
       {isColorVariant ? (
-        <div className="mt-3 grid grid-cols-[52px_1fr] gap-3">
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-            Color
+        <div className="mt-2 grid grid-cols-[44px_1fr] gap-2">
+          <label className="flex flex-col gap-1 text-[12px] font-bold text-slate-600">
+            Hex
             <input
               type="color"
               value={option.colorCode}
               onChange={(event) => onChange({ colorCode: event.target.value })}
-              className="h-[44px] w-full cursor-pointer rounded border border-[#E5E7EB] bg-white p-1"
+              className="h-9 w-full cursor-pointer rounded border border-[#E5E7EB] bg-white p-1"
               aria-label="Color code"
             />
-            <span className="min-h-4 text-[11px] text-transparent">.</span>
           </label>
-          <Input
-            label="Hex code"
+          <CompactField
+            label="Color code"
             value={option.colorCode}
-            onChange={(event) => onChange({ colorCode: event.target.value })}
+            onChange={(colorCode) => onChange({ colorCode })}
             placeholder="#000000"
-            maxLength={7}
           />
         </div>
       ) : null}
-      <label className="mt-3 flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F8FAFC] px-3 py-2">
-        <span className="text-[13px] font-bold text-[#1F2937]">Active</span>
-        <input
-          type="checkbox"
-          checked={option.isActive}
-          onChange={(event) => onChange({ isActive: event.target.checked })}
-          className="h-5 w-5 accent-[color:var(--color-primary)]"
-        />
-      </label>
     </div>
+  );
+}
+
+function CompactField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1 text-[12px] font-bold text-slate-600">
+      {label}
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        maxLength={80}
+        className="h-9 w-full rounded border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#1F2937] outline-none transition-colors placeholder:text-[#94A3B8] focus:border-[#0088FF]"
+      />
+    </label>
   );
 }

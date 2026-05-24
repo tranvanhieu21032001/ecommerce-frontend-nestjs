@@ -1,5 +1,6 @@
 export type VariantOptionForm = {
   id: string;
+  variantId?: string;
   value: string;
   colorCode: string;
   isActive: boolean;
