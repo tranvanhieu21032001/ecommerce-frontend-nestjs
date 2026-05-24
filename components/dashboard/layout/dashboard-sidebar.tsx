@@ -34,7 +34,7 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Coupon Code",
-        href: "#",
+        href: "/dashboard/coupons",
         icon: () => <SidebarSvgIcon src="/icons/coupon.svg" />,
       },
       {
@@ -79,7 +79,7 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Product List",
-        href: "#",
+        href: "/dashboard/products",
         icon: () => <SidebarSvgIcon src="/icons/product-list.svg" />,
       },
     ],

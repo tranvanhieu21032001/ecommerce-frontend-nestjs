@@ -70,6 +70,9 @@ export type ProductPayload = {
 
 export type ProductQuery = {
   search?: string;
+  categoryId?: string;
+  brandId?: string;
+  tagId?: string;
   isActive?: boolean;
   page?: number;
   limit?: number;
@@ -90,6 +93,18 @@ function toQueryString(query: ProductQuery) {
 
   if (query.search?.trim()) {
     params.set("search", query.search.trim());
+  }
+
+  if (query.categoryId) {
+    params.set("categoryId", query.categoryId);
+  }
+
+  if (query.brandId) {
+    params.set("brandId", query.brandId);
+  }
+
+  if (query.tagId) {
+    params.set("tagId", query.tagId);
   }
 
   if (typeof query.isActive === "boolean") {
@@ -143,5 +158,11 @@ export async function createProduct(payload: ProductPayload): Promise<Product> {
   return apiRequest<Product>("/api/v1/products", {
     method: "POST",
     body: cleanPayload(payload),
+  });
+}
+
+export async function deleteProduct(id: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(`/api/v1/products/${id}`, {
+    method: "DELETE",
   });
 }

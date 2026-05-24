@@ -73,9 +73,13 @@ export function DashboardShell({ children }: DashboardShellProps) {
           ? "Categories"
           : pathname === "/dashboard/variants"
             ? "Variants"
-            : pathname === "/dashboard/products/add"
-              ? "Add Product"
-              : "Dashboard";
+            : pathname === "/dashboard/coupons"
+              ? "Coupon Codes"
+              : pathname === "/dashboard/products"
+                ? "Product List"
+                : pathname === "/dashboard/products/add"
+                  ? "Add Product"
+                  : "Dashboard";
 
   if (isLoading) {
     return (
