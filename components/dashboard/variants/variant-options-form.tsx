@@ -62,7 +62,7 @@ export function VariantOptionsForm({
           isRequired
           value={form.name}
           onChange={(event) => onChange({ name: event.target.value })}
-          placeholder="Size, Color, Material"
+          placeholder="Enter variant name"
           maxLength={80}
         />
 
@@ -161,7 +161,7 @@ function OptionRow({
         label={isColorVariant ? "Color name" : "Option value"}
         value={option.value}
         onChange={(value) => onChange({ value })}
-        placeholder={isColorVariant ? "Black, Red, Blue" : "S, M, L"}
+        placeholder={isColorVariant ? "Enter color name" : "Enter option value"}
       />
       {isColorVariant ? (
         <div className="mt-2 grid grid-cols-[44px_1fr] gap-2">

@@ -8,6 +8,12 @@ export type Product = {
   stock: number;
   sku: string;
   imageUrl: string | null;
+  images?: Array<{
+    id: string;
+    imageUrl: string;
+    sortOrder: number;
+    isPrimary: boolean;
+  }>;
   category: string | null;
   brand: {
     id: string;
@@ -15,9 +21,51 @@ export type Product = {
     slug: string;
     logoUrl: string | null;
   } | null;
+  tags?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+  variations?: Array<{
+    id: string;
+    sku: string | null;
+    price: number;
+    stock: number;
+    isActive: boolean;
+    options: Array<{
+      id: string;
+      name: string;
+      attributes: Record<string, unknown>;
+    }>;
+  }>;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ProductPayload = {
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  sku: string;
+  imageUrl?: string;
+  images?: Array<{
+    imageUrl: string;
+    sortOrder?: number;
+    isPrimary?: boolean;
+  }>;
+  categoryId: string;
+  brandId?: string;
+  tagIds?: string[];
+  variations?: Array<{
+    variantIds: string[];
+    price: number;
+    stock: number;
+    sku?: string;
+    isActive?: boolean;
+  }>;
+  isActive?: boolean;
 };
 
 export type ProductQuery = {
@@ -66,4 +114,34 @@ export async function getProducts(
   return apiRequest<ProductListResponse>(
     `/api/v1/products${toQueryString(query)}`,
   );
+}
+
+function cleanPayload(payload: ProductPayload): ProductPayload {
+  return {
+    name: payload.name.trim(),
+    description: payload.description?.trim() || undefined,
+    price: payload.price,
+    stock: payload.stock,
+    sku: payload.sku.trim(),
+    imageUrl: payload.imageUrl?.trim() || undefined,
+    images: payload.images
+      ?.map((image, index) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder ?? index,
+        isPrimary: image.isPrimary,
+      }))
+      .filter((image) => image.imageUrl),
+    categoryId: payload.categoryId,
+    brandId: payload.brandId || undefined,
+    tagIds: payload.tagIds?.filter(Boolean),
+    variations: payload.variations,
+    isActive: payload.isActive,
+  };
+}
+
+export async function createProduct(payload: ProductPayload): Promise<Product> {
+  return apiRequest<Product>("/api/v1/products", {
+    method: "POST",
+    body: cleanPayload(payload),
+  });
 }

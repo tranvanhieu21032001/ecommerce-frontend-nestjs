@@ -69,7 +69,7 @@ const sidebarSections: SidebarGroup[] = [
     items: [
       {
         label: "Add Products",
-        href: "#",
+        href: "/dashboard/products/add",
         icon: () => <SidebarSvgIcon src="/icons/add.svg" />,
       },
       {

@@ -405,7 +405,7 @@ export function BrandsManager() {
             onChange={(event) =>
               setForm((current) => ({ ...current, name: event.target.value }))
             }
-            placeholder="Apple"
+            placeholder="Enter brand name"
             maxLength={100}
           />
           <Input
@@ -414,7 +414,7 @@ export function BrandsManager() {
             onChange={(event) =>
               setForm((current) => ({ ...current, slug: event.target.value }))
             }
-            placeholder="apple"
+            placeholder="brand-slug"
             maxLength={100}
           />
           <div className="grid gap-2">
@@ -487,7 +487,7 @@ export function BrandsManager() {
                   description: event.target.value,
                 }))
               }
-              placeholder="Short note for this brand"
+              placeholder="Enter brand description"
               maxLength={255}
               className="min-h-[112px] resize-none rounded border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#1F2937] outline-none transition-colors placeholder:text-[color:var(--color-subtext)] focus:border-[#0088FF]"
             />

@@ -326,7 +326,7 @@ export function TagsManager() {
             onChange={(event) =>
               setForm((current) => ({ ...current, name: event.target.value }))
             }
-            placeholder="Summer Sale"
+            placeholder="Enter tag name"
             maxLength={100}
           />
           <Input
@@ -335,7 +335,7 @@ export function TagsManager() {
             onChange={(event) =>
               setForm((current) => ({ ...current, slug: event.target.value }))
             }
-            placeholder="summer-sale"
+            placeholder="tag-slug"
             maxLength={100}
           />
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
@@ -348,7 +348,7 @@ export function TagsManager() {
                   description: event.target.value,
                 }))
               }
-              placeholder="Short note for this tag"
+              placeholder="Enter tag description"
               maxLength={255}
               className="min-h-[112px] resize-none rounded border border-[#E5E7EB] bg-white px-4 py-3 text-sm text-[#1F2937] outline-none transition-colors placeholder:text-[color:var(--color-subtext)] focus:border-[#0088FF]"
             />
