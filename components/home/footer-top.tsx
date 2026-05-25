@@ -1,30 +1,25 @@
-import {
-  HeadsetIcon,
-  ReturnIcon,
-  ShieldIcon,
-  TruckIcon,
-} from "@/components/home/shop-icons";
+import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 
 const data = [
   {
     title: "Visit Us",
     subtitle: "New Orleans, USA",
-    icon: <ShieldIcon />,
+    icon: <MapPin size={34} strokeWidth={1.5} />,
   },
   {
     title: "Call Us",
     subtitle: "+12 958 648 597",
-    icon: <TruckIcon />,
+    icon: <Phone size={34} strokeWidth={1.5} />,
   },
   {
     title: "Working Hours",
     subtitle: "Mon - Sat: 10:00 AM - 7:00 PM",
-    icon: <ReturnIcon />,
+    icon: <Clock3 size={34} strokeWidth={1.5} />,
   },
   {
     title: "Email Us",
-    subtitle: "Shopcart@gmail.com",
-    icon: <HeadsetIcon />,
+    subtitle: "thehole@gmail.com",
+    icon: <Mail size={34} strokeWidth={1.5} />,
   },
 ];
 

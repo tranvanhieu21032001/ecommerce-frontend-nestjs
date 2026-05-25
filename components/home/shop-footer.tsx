@@ -15,7 +15,7 @@ export function ShopFooter() {
           <div className="space-y-4">
             <ShopLogo />
             <SubText>
-              Discover curated collections at Shopcart, blending style and
+              Discover curated collections at The Hole, blending style and
               comfort to elevate your everyday shopping.
             </SubText>
             <div className="flex gap-3 text-[#151515]/60">

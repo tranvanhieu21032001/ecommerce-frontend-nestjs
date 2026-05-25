@@ -103,6 +103,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
         }}
         collapsed={collapsed}
         onToggle={() => setCollapsed((prev) => !prev)}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -123,14 +125,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
               onClick={() => router.push("/")}
             >
               View site
-            </Button>
-            <Button
-              variant="danger"
-              className="w-auto px-4"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? "Logging out..." : "Logout"}
             </Button>
           </div>
         </header>

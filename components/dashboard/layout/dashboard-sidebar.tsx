@@ -101,12 +101,16 @@ type DashboardSidebarProps = {
   };
   collapsed: boolean;
   onToggle: () => void;
+  onLogout: () => void;
+  isLoggingOut: boolean;
 };
 
 export function DashboardSidebar({
   user,
   collapsed,
   onToggle,
+  onLogout,
+  isLoggingOut,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
   const initials = useMemo(() => {
@@ -210,26 +214,15 @@ export function DashboardSidebar({
           {!collapsed ? (
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7C8794] transition-colors hover:bg-white hover:text-[#1F2937]"
-              aria-label="Sign out"
+              onClick={onLogout}
+              disabled={isLoggingOut}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-[#7C8794] transition-colors hover:bg-white hover:text-[#1F2937] disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label={isLoggingOut ? "Logging out" : "Logout"}
             >
               <LogoutIcon />
             </button>
           ) : null}
         </div>
-
-        {!collapsed ? (
-          <Link
-            href="/"
-            className="mt-4 flex items-center justify-between rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-[14px] font-semibold text-[#0F4C5C] shadow-sm transition-colors hover:bg-[#F8FAFC]"
-          >
-            <span className="flex items-center gap-3">
-              <ShopIcon />
-              Your Shop
-            </span>
-            <ExternalIcon />
-          </Link>
-        ) : null}
       </div>
     </aside>
   );
@@ -315,70 +308,6 @@ function LogoutIcon() {
       />
       <path
         d="M14 8l4 4-4 4M18 12H10"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ShopIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <path
-        d="M4 10h16v9H4z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 6h18v4H3z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 14h8"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ExternalIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <path
-        d="M14 5h5v5"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 14 19 5"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-      <path
-        d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"

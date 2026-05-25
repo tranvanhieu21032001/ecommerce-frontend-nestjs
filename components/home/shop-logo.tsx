@@ -17,14 +17,14 @@ export function ShopLogo({
           className,
         )}
       >
-        Shopcar
+        The Ho
         <span
           className={cn(
             "text-[#3B9C3C] transition-colors duration-300",
             spanClassName,
           )}
         >
-          t
+          le
         </span>
       </h2>
     </Link>

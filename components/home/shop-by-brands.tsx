@@ -1,12 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Headset, RefreshCcw, ShieldCheck, Truck } from "lucide-react";
 
-import {
-  HeadsetIcon,
-  ReturnIcon,
-  ShieldIcon,
-  TruckIcon,
-} from "@/components/home/shop-icons";
 import { Title } from "@/components/home/title";
 import { brands } from "@/lib/mock/home";
 
@@ -14,22 +9,22 @@ const extraData = [
   {
     title: "Free Delivery",
     description: "Free shipping over $100",
-    icon: <TruckIcon />,
+    icon: <Truck size={42} strokeWidth={1.4} />,
   },
   {
     title: "Free Return",
     description: "Free shipping over $100",
-    icon: <ReturnIcon />,
+    icon: <RefreshCcw size={42} strokeWidth={1.4} />,
   },
   {
     title: "Customer Support",
     description: "Friendly 24/7 customer support",
-    icon: <HeadsetIcon />,
+    icon: <Headset size={42} strokeWidth={1.4} />,
   },
   {
     title: "Money Back guarantee",
     description: "Quality checked by our team",
-    icon: <ShieldIcon />,
+    icon: <ShieldCheck size={42} strokeWidth={1.4} />,
   },
 ];
 

@@ -32,7 +32,7 @@ export type HomeBlog = {
 
 export const headerLinks = [
   { title: "Home", href: "/" },
-  { title: "Shop", href: "#products" },
+  { title: "Shop", href: "/shop" },
   { title: "Blog", href: "#blog" },
   { title: "Hot Deal", href: "#products" },
 ];
@@ -175,7 +175,10 @@ export const categories: HomeCategory[] = [
 
 export const brands: HomeBrand[] = Array.from({ length: 8 }, (_, index) => ({
   id: `brand-${index + 1}`,
-  title: `Brand ${index + 1}`,
+  title:
+    ["Apple", "Samsung", "Sony", "LG", "Intel", "Canon", "Philips", "Xiaomi"][
+      index
+    ] ?? `Brand ${index + 1}`,
   image:
     index === 0
       ? "/shopcartyt/images/brands/brand_1.webp"
@@ -183,6 +186,14 @@ export const brands: HomeBrand[] = Array.from({ length: 8 }, (_, index) => ({
         ? "/shopcartyt/images/brands/brand_2.jpg"
         : `/shopcartyt/images/brands/brand_${index + 1}.png`,
 }));
+
+export const priceRanges = [
+  { title: "Under $100", value: "0-100", min: 0, max: 100 },
+  { title: "$100 - $200", value: "100-200", min: 100, max: 200 },
+  { title: "$200 - $300", value: "200-300", min: 200, max: 300 },
+  { title: "$300 - $500", value: "300-500", min: 300, max: 500 },
+  { title: "Over $500", value: "500-10000", min: 500, max: 10000 },
+];
 
 export const blogs: HomeBlog[] = [
   {
