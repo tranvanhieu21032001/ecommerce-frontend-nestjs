@@ -1,57 +1,114 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { HomeProductCard } from "@/components/home/home-product-card";
 import { ShopFilterList } from "@/components/home/shop-filter-list";
 import { ShopContainer } from "@/components/home/shop-container";
 import { Title } from "@/components/home/title";
-import {
-  brands,
-  categories,
-  priceRanges,
-  products,
-  type HomeProduct,
-} from "@/lib/mock/home";
+import { getBrands, type Brand } from "@/lib/api/brands";
+import { getCategories, type Category } from "@/lib/api/categories";
+import { getProducts, type Product } from "@/lib/api/products";
+import { priceRanges, type HomeProduct } from "@/lib/mock/home";
 
-export function ShopPageContent() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+export function ShopPageContent({
+  initialCategoryId = null,
+}: {
+  initialCategoryId?: string | null;
+}) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    initialCategoryId,
+  );
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        const categoryMatch = selectedCategory
-          ? product.category === selectedCategory
-          : true;
-        const brandMatch = selectedBrand
-          ? getProductBrand(product) === selectedBrand
-          : true;
-        const priceRange = priceRanges.find(
-          (range) => range.value === selectedPrice,
-        );
-        const priceMatch = priceRange
-          ? product.price >= priceRange.min && product.price <= priceRange.max
-          : true;
+  useEffect(() => {
+    let active = true;
 
-        return categoryMatch && brandMatch && priceMatch;
-      }),
-    [selectedBrand, selectedCategory, selectedPrice],
-  );
+    async function loadOptions() {
+      try {
+        const [categoryResponse, brandResponse] = await Promise.all([
+          getCategories({ isActive: true, page: 1, limit: 100 }),
+          getBrands({ isActive: true, page: 1, limit: 100 }),
+        ]);
+        if (active) {
+          setCategories(categoryResponse.data);
+          setBrands(brandResponse.data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : "Could not load filters.");
+        }
+      } finally {
+        if (active) {
+          setIsLoadingOptions(false);
+        }
+      }
+    }
+
+    void loadOptions();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProducts() {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const response = await getProducts({
+          categoryId: selectedCategory ?? undefined,
+          brandId: selectedBrand ?? undefined,
+          isActive: true,
+          page: 1,
+          limit: 100,
+        });
+        if (active) {
+          setProducts(response.data.map(toHomeProduct));
+        }
+      } catch (err) {
+        if (active) {
+          setProducts([]);
+          setError(err instanceof Error ? err.message : "Could not load products.");
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadProducts();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedBrand, selectedCategory]);
+
+  const filteredProducts = useMemo(() => {
+    const range = priceRanges.find((price) => price.value === selectedPrice);
+
+    return range
+      ? products.filter((product) => product.price >= range.min && product.price <= range.max)
+      : products;
+  }, [products, selectedPrice]);
 
   function resetFilters() {
     setSelectedCategory(null);
     setSelectedBrand(null);
     setSelectedPrice(null);
-  }
-
-  function updateFilter(callback: () => void) {
-    setIsLoading(true);
-    callback();
-    window.setTimeout(() => setIsLoading(false), 180);
   }
 
   const hasFilters = selectedCategory || selectedBrand || selectedPrice;
@@ -81,24 +138,22 @@ export function ShopPageContent() {
             <ShopFilterList
               title="Product Categories"
               items={categories.map((category) => ({
-                label: category.title,
-                value: category.title,
+                label: category.name,
+                value: category.id,
               }))}
               selectedValue={selectedCategory}
-              onSelect={(value) =>
-                updateFilter(() => setSelectedCategory(value))
-              }
-              onClear={() => updateFilter(() => setSelectedCategory(null))}
+              onSelect={setSelectedCategory}
+              onClear={() => setSelectedCategory(null)}
             />
             <ShopFilterList
               title="Brands"
               items={brands.map((brand) => ({
-                label: brand.title,
-                value: brand.title,
+                label: brand.name,
+                value: brand.id,
               }))}
               selectedValue={selectedBrand}
-              onSelect={(value) => updateFilter(() => setSelectedBrand(value))}
-              onClear={() => updateFilter(() => setSelectedBrand(null))}
+              onSelect={setSelectedBrand}
+              onClear={() => setSelectedBrand(null)}
             />
             <ShopFilterList
               title="Price"
@@ -107,9 +162,15 @@ export function ShopPageContent() {
                 value: price.value,
               }))}
               selectedValue={selectedPrice}
-              onSelect={(value) => updateFilter(() => setSelectedPrice(value))}
-              onClear={() => updateFilter(() => setSelectedPrice(null))}
+              onSelect={setSelectedPrice}
+              onClear={() => setSelectedPrice(null)}
             />
+            {isLoadingOptions ? (
+              <p className="mt-4 flex items-center gap-2 text-sm text-[#52525B]">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading filters...
+              </p>
+            ) : null}
           </aside>
 
           <section className="flex-1 pt-5">
@@ -128,7 +189,7 @@ export function ShopPageContent() {
                   ))}
                 </div>
               ) : (
-                <NoProductAvailable />
+                <NoProductAvailable error={error} />
               )}
             </div>
           </section>
@@ -138,19 +199,27 @@ export function ShopPageContent() {
   );
 }
 
-function NoProductAvailable() {
+function NoProductAvailable({ error }: { error?: string }) {
   return (
     <div className="mt-0 flex min-h-80 flex-col items-center justify-center rounded-lg bg-white p-10 text-center">
       <p className="text-lg font-bold text-[#151515]">No product available</p>
       <p className="mt-2 max-w-md text-sm text-[#52525B]">
-        Try resetting filters or choosing a different category, brand, or price
-        range.
+        {error || "Try resetting filters or choosing a different category, brand, or price range."}
       </p>
     </div>
   );
 }
 
-function getProductBrand(product: HomeProduct) {
-  const index = Number(product.id.replace("product-", "")) - 1;
-  return brands[index % brands.length]?.title ?? brands[0].title;
+function toHomeProduct(product: Product): HomeProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    category: product.category ?? "Uncategorized",
+    image:
+      product.images?.find((image) => image.isPrimary)?.imageUrl ??
+      product.imageUrl ??
+      "/icons/product-list.svg",
+    price: product.price,
+    stock: product.stock,
+  };
 }

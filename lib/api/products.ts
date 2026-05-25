@@ -131,6 +131,10 @@ export async function getProducts(
   );
 }
 
+export async function getProduct(id: string): Promise<Product> {
+  return apiRequest<Product>(`/api/v1/products/${id}`);
+}
+
 function cleanPayload(payload: ProductPayload): ProductPayload {
   return {
     name: payload.name.trim(),

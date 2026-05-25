@@ -1,40 +1,44 @@
 "use client";
 
-import { productTabs } from "@/lib/mock/home";
+import Link from "next/link";
+
+import type { Category } from "@/lib/api/categories";
 import { cn } from "@/lib/cn";
 
 export function HomeTabbar({
-  selectedTab,
-  onTabSelect,
+  categories,
+  selectedCategoryId,
+  onCategorySelect,
 }: {
-  selectedTab: string;
-  onTabSelect: (tab: string) => void;
+  categories: Category[];
+  selectedCategoryId: string;
+  onCategorySelect: (categoryId: string) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-5">
       <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold md:gap-3">
-        {productTabs.map((item) => (
+        {categories.map((category) => (
           <button
             type="button"
-            onClick={() => onTabSelect(item)}
-            key={item}
+            onClick={() => onCategorySelect(category.id)}
+            key={category.id}
             className={cn(
               "rounded-full border border-[#3B9C3C]/30 px-4 py-1.5 transition-all duration-300 hover:border-[#3B9C3C] hover:bg-[#3B9C3C] hover:text-white md:px-6 md:py-2",
-              selectedTab === item
+              selectedCategoryId === category.id
                 ? "border-[#3B9C3C] bg-[#3B9C3C] text-white"
                 : "bg-[#3B9C3C]/10 text-[#151515]",
             )}
           >
-            {item}
+            {category.name}
           </button>
         ))}
       </div>
-      <a
-        href="#products"
+      <Link
+        href="/shop"
         className="rounded-full border border-[#151515] px-4 py-1 text-sm font-semibold transition-all duration-300 hover:border-[#3B9C3C] hover:bg-[#3B9C3C] hover:text-white"
       >
         See all
-      </a>
+      </Link>
     </div>
   );
 }

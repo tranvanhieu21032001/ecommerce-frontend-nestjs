@@ -8,10 +8,18 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700", "900"],
 });
 
-export default function ShopPage() {
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoryId?: string | string[] }>;
+}) {
+  const categoryId = (await searchParams).categoryId;
+  const initialCategoryId =
+    typeof categoryId === "string" ? categoryId : categoryId?.[0] ?? null;
+
   return (
     <ShopShell className={poppins.className}>
-      <ShopPageContent />
+      <ShopPageContent initialCategoryId={initialCategoryId} />
     </ShopShell>
   );
 }

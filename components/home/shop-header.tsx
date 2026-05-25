@@ -17,13 +17,18 @@ import { useEffect, useState } from "react";
 
 import { ShopContainer } from "@/components/home/shop-container";
 import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
+import { getCart } from "@/lib/api/cart";
+import { getWishlist } from "@/lib/api/wishlist";
 import { headerLinks } from "@/lib/mock/home";
+import { CART_UPDATED_EVENT, WISHLIST_UPDATED_EVENT } from "@/lib/store-events";
 import { cn } from "@/lib/cn";
 
 export function ShopHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -36,9 +41,16 @@ export function ShopHeader() {
         if (active) {
           setUser(currentUser);
         }
+        const [cart, wishlist] = await Promise.all([getCart(), getWishlist()]);
+        if (active) {
+          setCartCount(cart.itemCount);
+          setWishlistCount(wishlist.itemCount);
+        }
       } catch {
         if (active) {
           setUser(null);
+          setCartCount(0);
+          setWishlistCount(0);
         }
       } finally {
         if (active) {
@@ -54,12 +66,48 @@ export function ShopHeader() {
     };
   }, []);
 
+  useEffect(() => {
+    async function updateCartCount() {
+      try {
+        const cart = await getCart();
+        setCartCount(cart.itemCount);
+      } catch {
+        setCartCount(0);
+      }
+    }
+
+    window.addEventListener(CART_UPDATED_EVENT, updateCartCount);
+
+    return () => {
+      window.removeEventListener(CART_UPDATED_EVENT, updateCartCount);
+    };
+  }, []);
+
+  useEffect(() => {
+    async function updateWishlistCount() {
+      try {
+        const wishlist = await getWishlist();
+        setWishlistCount(wishlist.itemCount);
+      } catch {
+        setWishlistCount(0);
+      }
+    }
+
+    window.addEventListener(WISHLIST_UPDATED_EVENT, updateWishlistCount);
+
+    return () => {
+      window.removeEventListener(WISHLIST_UPDATED_EVENT, updateWishlistCount);
+    };
+  }, []);
+
   async function handleLogout() {
     setIsLoggingOut(true);
     try {
       await logout();
     } finally {
       setUser(null);
+      setCartCount(0);
+      setWishlistCount(0);
       setIsLoggingOut(false);
       router.refresh();
     }
@@ -137,16 +185,23 @@ export function ShopHeader() {
             className="relative transition-colors duration-300 hover:text-[#3B9C3C]"
           >
             <ShoppingBag size={21} />
-            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#063D29] text-[10px] font-semibold text-white">
-              3
-            </span>
+            {cartCount > 0 ? (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#063D29] px-1 text-[10px] font-semibold text-white">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            ) : null}
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
-            className="hidden transition-colors duration-300 hover:text-[#3B9C3C] sm:inline-flex"
+            className="relative hidden transition-colors duration-300 hover:text-[#3B9C3C] sm:inline-flex"
           >
             <Heart size={21} />
+            {wishlistCount > 0 ? (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#063D29] px-1 text-[10px] font-semibold text-white">
+                {wishlistCount > 99 ? "99+" : wishlistCount}
+              </span>
+            ) : null}
           </Link>
           {isCheckingAuth ? (
             <span className="hidden h-7 w-7 animate-pulse rounded-full bg-[#063C28]/10 sm:inline-flex" />

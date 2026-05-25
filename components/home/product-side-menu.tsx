@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { cn } from "@/lib/cn";
-import { getCurrentUser } from "@/lib/api/auth";
+import { addWishlistItem, removeWishlistItem } from "@/lib/api/wishlist";
 import type { HomeProduct } from "@/lib/mock/home";
+import { notifyWishlistUpdated } from "@/lib/store-events";
+import { toast } from "sonner";
 
 export function ProductSideMenu({
   product,
@@ -27,8 +29,18 @@ export function ProductSideMenu({
     setIsCheckingAuth(true);
 
     try {
-      await getCurrentUser();
+      if (isFavorite) {
+        await removeWishlistItem(product.id);
+      } else {
+        await addWishlistItem(product.id);
+      }
       setIsFavorite((value) => !value);
+      notifyWishlistUpdated();
+      toast.success(
+        isFavorite
+          ? `${product.name} removed from wishlist.`
+          : `${product.name} saved to wishlist.`,
+      );
     } catch {
       router.push("/wishlist");
     } finally {
@@ -50,8 +62,10 @@ export function ProductSideMenu({
           isFavorite ? "from" : "to"
         } wishlist`}
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#151515] transition-colors duration-300 hover:bg-[#063C28]/80 hover:text-white",
-          isFavorite && "bg-[#063C28]/80 text-white",
+          "flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-300",
+          isFavorite
+            ? "border-[#3B9C3C] bg-[#3B9C3C] text-white hover:bg-[#158947] hover:text-white"
+            : "border-transparent bg-white/90 text-[#151515] hover:border-[#3B9C3C] hover:text-[#3B9C3C]",
           isCheckingAuth && "cursor-not-allowed opacity-60",
         )}
       >

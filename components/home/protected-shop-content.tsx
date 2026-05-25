@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { ShopNoAccess } from "@/components/home/shop-no-access";
 import { getCurrentUser } from "@/lib/api/auth";
@@ -12,9 +13,15 @@ export function ProtectedShopContent({
   children: React.ReactNode;
   details?: string;
 }) {
+  const pathname = usePathname();
   const [authState, setAuthState] = useState<"loading" | "authorized" | "guest">(
     "loading",
   );
+  const noAccessDetails =
+    details ??
+    (pathname === "/wishlist"
+      ? "Log in to see your wishlist and save the products you love. Don't miss your favorite deals!"
+      : undefined);
 
   useEffect(() => {
     let active = true;
@@ -48,7 +55,7 @@ export function ProtectedShopContent({
   }
 
   if (authState === "guest") {
-    return <ShopNoAccess details={details} />;
+    return <ShopNoAccess details={noAccessDetails} />;
   }
 
   return children;

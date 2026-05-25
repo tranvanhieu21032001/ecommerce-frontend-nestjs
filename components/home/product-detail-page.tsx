@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { ShoppingBag, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import Link from "next/link";
 
+import { AddToCartButton } from "@/components/home/add-to-cart-button";
 import { PriceView } from "@/components/home/price-view";
 import { ProductSideMenu } from "@/components/home/product-side-menu";
 import { ShopContainer } from "@/components/home/shop-container";
@@ -29,6 +30,7 @@ export function ProductDetailPage({ product }: { product: HomeProduct }) {
               width={900}
               height={900}
               priority
+              unoptimized
               className="h-[360px] w-full object-contain p-8 md:h-[540px]"
             />
             <ProductSideMenu product={product} />
@@ -46,6 +48,7 @@ export function ProductDetailPage({ product }: { product: HomeProduct }) {
                   alt={`${product.name} thumbnail ${index + 1}`}
                   width={180}
                   height={180}
+                  unoptimized
                   className="h-24 w-full object-contain"
                 />
               </button>
@@ -100,13 +103,11 @@ export function ProductDetailPage({ product }: { product: HomeProduct }) {
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/cart"
-              className="rounded-full bg-[#063C28] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C]"
-            >
-              <ShoppingBag className="mr-2 inline-flex h-4 w-4" />
-              Add to cart
-            </Link>
+            <AddToCartButton
+              productId={product.id}
+              productName={product.name}
+              disabled={product.stock === 0}
+            />
             <Link
               href="/wishlist"
               className="rounded-full border border-[#063C28]/30 px-8 py-3 text-center text-sm font-semibold text-[#063C28] transition-colors hover:border-[#3B9C3C] hover:text-[#3B9C3C]"

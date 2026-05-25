@@ -1,14 +1,37 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { Flame, ShoppingBag, Star } from "lucide-react";
+import { Flame, Loader2, ShoppingCart, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { ProductSideMenu } from "@/components/home/product-side-menu";
 import { PriceView } from "@/components/home/price-view";
+import { addCartItem } from "@/lib/api/cart";
 import type { HomeProduct } from "@/lib/mock/home";
+import { notifyCartUpdated } from "@/lib/store-events";
 import { cn } from "@/lib/cn";
 
 export function HomeProductCard({ product }: { product: HomeProduct }) {
+  const router = useRouter();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const productHref = `/shop/product/${product.id}`;
+
+  async function handleAddToCart() {
+    setIsAddingToCart(true);
+
+    try {
+      await addCartItem(product.id);
+      notifyCartUpdated();
+      toast.success(`${product.name} added to cart.`);
+    } catch {
+      router.push("/cart");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  }
 
   return (
     <article className="group rounded-md border border-[#151515]/20 bg-white text-sm transition-shadow duration-300 hover:shadow-sm">
@@ -19,6 +42,7 @@ export function HomeProductCard({ product }: { product: HomeProduct }) {
             alt={product.name}
             width={500}
             height={500}
+            unoptimized
             className={cn(
               "h-64 w-full bg-[#F6F6F6] object-contain transition-transform duration-500",
               product.stock !== 0 ? "group-hover:scale-105" : "opacity-50",
@@ -80,13 +104,27 @@ export function HomeProductCard({ product }: { product: HomeProduct }) {
           discount={product.discount}
           className="text-sm"
         />
-        <Link
-          href="/cart"
-          className="mt-1 flex h-9 w-36 items-center justify-center rounded-full bg-[#063C28] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C]"
-        >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          Add to cart
-        </Link>
+        <div className="mt-1 flex items-center gap-2">
+          <Link
+            href="/checkout"
+            className="flex h-9 flex-1 items-center justify-center rounded-full bg-[#063C28] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C]"
+          >
+            Buy now
+          </Link>
+          <button
+            type="button"
+            onClick={() => void handleAddToCart()}
+            disabled={isAddingToCart || product.stock === 0}
+            aria-label={`Add ${product.name} to cart`}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#063C28]/30 text-[#063C28] transition-colors hover:border-[#3B9C3C] hover:bg-[#3B9C3C] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isAddingToCart ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShoppingCart className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
     </article>
   );
