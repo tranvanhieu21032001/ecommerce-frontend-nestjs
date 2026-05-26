@@ -89,7 +89,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F5F7FB] px-6 py-10">
+      <main className="flex h-screen overflow-hidden items-center justify-center bg-[#F5F7FB] px-6 py-10">
         <p className="text-[color:var(--color-subtext)]">Checking access...</p>
       </main>
     );
@@ -100,7 +100,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
   }
 
   return (
-    <main className="flex min-h-screen bg-[#F5F7FB]">
+    <main className="flex h-screen overflow-hidden bg-[#F5F7FB]">
       <DashboardSidebar
         user={{
           email: user.email,
@@ -113,8 +113,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
         isLoggingOut={isLoggingOut}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[88px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6 lg:px-8">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-[88px] shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-6 lg:px-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-subtext)]">
               Admin area
@@ -135,7 +135,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </div>
         </header>
 
-        <div className="min-w-0 flex-1 p-6 lg:p-8">{children}</div>
+        <div className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto p-6 lg:p-8">
+          {children}
+        </div>
       </div>
     </main>
   );

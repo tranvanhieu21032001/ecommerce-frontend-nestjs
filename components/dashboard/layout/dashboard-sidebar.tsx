@@ -48,11 +48,6 @@ const sidebarSections: SidebarGroup[] = [
         icon: () => <SidebarSvgIcon src="/icons/categories.svg" />,
       },
       {
-        label: "Transaction",
-        href: "#",
-        icon: () => <SidebarSvgIcon src="/icons/transaction.svg" />,
-      },
-      {
         label: "Brand",
         href: "/dashboard/brands",
         icon: () => <SidebarSvgIcon src="/icons/brand.svg" />,
@@ -78,22 +73,10 @@ const sidebarSections: SidebarGroup[] = [
         icon: () => <SidebarSvgIcon src="/icons/add.svg" />,
       },
       {
-        label: "Product Media",
-        href: "#",
-        icon: () => <SidebarSvgIcon src="/icons/media.svg" />,
-      },
-      {
         label: "Product List",
         href: "/dashboard/products",
         icon: () => <SidebarSvgIcon src="/icons/product-list.svg" />,
       },
-    ],
-  },
-  {
-    title: "Admin",
-    items: [
-      { label: "Admin role", href: "#", icon: UserBadgeIcon },
-      { label: "Control Authority", href: "#", icon: SettingsIcon },
     ],
   },
 ];
@@ -127,11 +110,11 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "group relative flex h-full shrink-0 flex-col border-r border-[#E5E7EB] bg-white transition-all duration-200",
+        "group relative z-10 flex h-screen shrink-0 flex-col border-r border-[#E5E7EB] bg-white transition-all duration-200",
         collapsed ? "w-[96px]" : "w-[300px]",
       )}
     >
-      <div className="relative flex h-[88px] items-center px-6">
+      <div className="relative flex h-[88px] shrink-0 items-center px-6">
         <Link
           href="/dashboard"
           className={cn(
@@ -182,7 +165,7 @@ export function DashboardSidebar({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
         {sidebarSections.map((section) => (
           <SidebarSection
             key={section.title}
@@ -194,7 +177,7 @@ export function DashboardSidebar({
         ))}
       </div>
 
-      <div className="border-t border-[#E5E7EB] p-4">
+      <div className="shrink-0 border-t border-[#E5E7EB] p-4">
         <div
           className={cn(
             "flex items-center gap-3 rounded-2xl bg-[#F8FAFC] p-3",
@@ -246,52 +229,6 @@ function SidebarSvgIcon({ src }: { src: string }) {
         svg.setAttribute("height", "22");
       }}
     />
-  );
-}
-
-function UserBadgeIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <circle
-        cx="12"
-        cy="8.5"
-        r="3.2"
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-      <path
-        d="M6 19a6 6 0 0 1 12 0"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-    >
-      <path
-        d="m12 4 1.1 2.1 2.4.5-.3 2.4 1.7 1.7 2.4-.3.5 2.4L20 14l-1.1 2.1 1 2.3-2.4.5-.5 2.4-2.4-.3-1.7 1.7-.5 2.4L12 20l-2.1 1.1-.5-2.4-2.4.3-.5-2.4-2.4-.5 1-2.3L4 14l1.1-2.1-1-2.3 2.4-.5.5-2.4 2.4.3L11.9 5 12 4Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="2.4" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
   );
 }
 

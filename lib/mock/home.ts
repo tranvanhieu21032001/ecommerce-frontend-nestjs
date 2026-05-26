@@ -45,7 +45,6 @@ export type HomeBlog = {
 export const headerLinks = [
   { title: "Home", href: "/" },
   { title: "Shop", href: "/shop" },
-  { title: "Hot Deal", href: "#products" },
 ];
 
 export const productTabs = ["Gadget", "Appliances", "Refrigerators", "Others"];

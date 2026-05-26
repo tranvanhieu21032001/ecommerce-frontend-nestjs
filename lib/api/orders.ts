@@ -22,6 +22,18 @@ export type OrderItem = {
   flashSaleItemId: string | null;
   quantity: number;
   price: number;
+  product: {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+  };
+  variation: {
+    id: string;
+    options: Array<{
+      id: string;
+      name: string;
+    }>;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };

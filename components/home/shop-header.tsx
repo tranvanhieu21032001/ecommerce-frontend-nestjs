@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  LayoutDashboard,
   Heart,
   LogOut,
   Logs,
@@ -18,6 +19,7 @@ import { useEffect, useState } from "react";
 import { ShopContainer } from "@/components/home/shop-container";
 import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
 import { getCart } from "@/lib/api/cart";
+import { getOrders } from "@/lib/api/orders";
 import { getWishlist } from "@/lib/api/wishlist";
 import { headerLinks } from "@/lib/mock/home";
 import { CART_UPDATED_EVENT, WISHLIST_UPDATED_EVENT } from "@/lib/store-events";
@@ -29,6 +31,7 @@ export function ShopHeader() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -41,16 +44,22 @@ export function ShopHeader() {
         if (active) {
           setUser(currentUser);
         }
-        const [cart, wishlist] = await Promise.all([getCart(), getWishlist()]);
+        const [cart, wishlist, orders] = await Promise.all([
+          getCart(),
+          getWishlist(),
+          getOrders({ page: 1, limit: 1 }),
+        ]);
         if (active) {
           setCartCount(cart.itemCount);
           setWishlistCount(wishlist.itemCount);
+          setOrderCount(orders.meta.total);
         }
       } catch {
         if (active) {
           setUser(null);
           setCartCount(0);
           setWishlistCount(0);
+          setOrderCount(0);
         }
       } finally {
         if (active) {
@@ -108,6 +117,7 @@ export function ShopHeader() {
       setUser(null);
       setCartCount(0);
       setWishlistCount(0);
+      setOrderCount(0);
       setIsLoggingOut(false);
       router.refresh();
     }
@@ -116,7 +126,7 @@ export function ShopHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white/70 py-5 backdrop-blur-md">
       <ShopContainer className="flex items-center justify-between text-[#52525B]">
-        <div className="flex w-auto items-center justify-start gap-2.5 md:w-1/3 md:gap-0">
+        <div className="flex items-center justify-start gap-2.5 md:gap-0">
           <button
             type="button"
             aria-label="Open menu"
@@ -144,34 +154,33 @@ export function ShopHeader() {
           </Link>
         </div>
 
-        <nav className="hidden w-1/3 items-center justify-center gap-7 text-sm font-semibold capitalize text-[#52525B] md:inline-flex">
-          {headerLinks.map((item) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className={cn(
-                "group relative transition-colors duration-300 hover:text-[#3B9C3C]",
-                pathname === item.href && "text-[#3B9C3C]",
-              )}
-            >
-              {item.title}
-              <span
+        <div className="flex items-center justify-end gap-5">
+          <nav className="hidden items-center gap-7 text-sm font-semibold capitalize text-[#52525B] md:inline-flex">
+            {headerLinks.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
                 className={cn(
-                  "absolute -bottom-0.5 left-1/2 h-0.5 w-0 bg-[#3B9C3C] transition-all duration-300 group-hover:left-0 group-hover:w-1/2",
-                  pathname === item.href && "left-0 w-1/2",
+                  "group relative transition-colors duration-300 hover:text-[#3B9C3C]",
+                  pathname === item.href && "text-[#3B9C3C]",
                 )}
-              />
-              <span
-                className={cn(
-                  "absolute -bottom-0.5 right-1/2 h-0.5 w-0 bg-[#3B9C3C] transition-all duration-300 group-hover:right-0 group-hover:w-1/2",
-                  pathname === item.href && "right-0 w-1/2",
-                )}
-              />
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex w-auto items-center justify-end gap-5 md:w-1/3">
+              >
+                {item.title}
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 left-1/2 h-0.5 w-0 bg-[#3B9C3C] transition-all duration-300 group-hover:left-0 group-hover:w-1/2",
+                    pathname === item.href && "left-0 w-1/2",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "absolute -bottom-0.5 right-1/2 h-0.5 w-0 bg-[#3B9C3C] transition-all duration-300 group-hover:right-0 group-hover:w-1/2",
+                    pathname === item.href && "right-0 w-1/2",
+                  )}
+                />
+              </Link>
+            ))}
+          </nav>
           <button
             type="button"
             aria-label="Search"
@@ -207,16 +216,18 @@ export function ShopHeader() {
             <span className="hidden h-7 w-7 animate-pulse rounded-full bg-[#063C28]/10 sm:inline-flex" />
           ) : user ? (
             <>
-              <button
-                type="button"
+              <Link
+                href="/orders"
                 aria-label="Orders"
                 className="group relative hidden transition-colors duration-300 hover:text-[#3B9C3C] sm:inline-flex"
               >
                 <Logs className="h-5 w-5" />
-                <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#063D29] text-[10px] font-semibold text-white">
-                  0
-                </span>
-              </button>
+                {orderCount > 0 ? (
+                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#063D29] px-1 text-[10px] font-semibold text-white">
+                    {orderCount > 99 ? "99+" : orderCount}
+                  </span>
+                ) : null}
+              </Link>
               <AccountMenu
                 user={user}
                 isLoggingOut={isLoggingOut}
@@ -284,6 +295,15 @@ function AccountMenu({
           <Settings className="h-4 w-4 shrink-0" />
           Manage account
         </button>
+        {user.role === "ADMIN" ? (
+          <Link
+            href="/dashboard"
+            className="flex w-full items-center gap-4 border-b border-[#E5E7EB] px-6 py-4 text-left text-[13px] font-medium text-[#52525B] transition-colors hover:bg-[#FAFAFA] hover:text-[#158947]"
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
+            Go to dashboard
+          </Link>
+        ) : null}
         <button
           type="button"
           disabled={isLoggingOut}
