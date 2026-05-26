@@ -13,9 +13,11 @@ import { getProducts, type Product } from "@/lib/api/products";
 import { priceRanges, type HomeProduct } from "@/lib/mock/home";
 
 export function ShopPageContent({
+  initialSearch = "",
   initialCategoryId = null,
   initialBrandId = null,
 }: {
+  initialSearch?: string;
   initialCategoryId?: string | null;
   initialBrandId?: string | null;
 }) {
@@ -29,6 +31,7 @@ export function ShopPageContent({
     initialBrandId,
   );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -73,6 +76,7 @@ export function ShopPageContent({
 
       try {
         const response = await getProducts({
+          search: searchTerm || undefined,
           categoryId: selectedCategory ?? undefined,
           brandId: selectedBrand ?? undefined,
           isActive: true,
@@ -99,7 +103,7 @@ export function ShopPageContent({
     return () => {
       active = false;
     };
-  }, [selectedBrand, selectedCategory]);
+  }, [searchTerm, selectedBrand, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     const range = priceRanges.find((price) => price.value === selectedPrice);
@@ -113,18 +117,26 @@ export function ShopPageContent({
     setSelectedCategory(null);
     setSelectedBrand(null);
     setSelectedPrice(null);
+    setSearchTerm("");
   }
 
-  const hasFilters = selectedCategory || selectedBrand || selectedPrice;
+  const hasFilters = searchTerm || selectedCategory || selectedBrand || selectedPrice;
 
   return (
     <div className="border-t bg-white">
       <ShopContainer className="mt-5">
         <div className="sticky top-0 z-10 mb-5 bg-white/90 py-3 backdrop-blur">
           <div className="flex items-center justify-between gap-4">
-            <Title className="text-lg uppercase tracking-wide">
-              Get the products as your needs
-            </Title>
+            <div>
+              <Title className="text-lg uppercase tracking-wide">
+                Get the products as your needs
+              </Title>
+              {searchTerm ? (
+                <p className="mt-2 text-sm text-[#52525B]">
+                  Results for <span className="font-semibold text-[#063C28]">&quot;{searchTerm}&quot;</span>
+                </p>
+              ) : null}
+            </div>
             {hasFilters ? (
               <button
                 type="button"

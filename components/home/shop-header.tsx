@@ -6,7 +6,6 @@ import {
   LogOut,
   Logs,
   Menu,
-  Search,
   Settings,
   ShoppingBag,
   UserRound,
@@ -17,6 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ShopContainer } from "@/components/home/shop-container";
+import { ShopSearch } from "@/components/home/shop-search";
 import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
 import { getCart } from "@/lib/api/cart";
 import { getOrders } from "@/lib/api/orders";
@@ -181,13 +181,7 @@ export function ShopHeader() {
               </Link>
             ))}
           </nav>
-          <button
-            type="button"
-            aria-label="Search"
-            className="transition-colors duration-300 hover:text-[#3B9C3C]"
-          >
-            <Search size={20} />
-          </button>
+          <ShopSearch />
           <Link
             href="/cart"
             aria-label="Cart"
