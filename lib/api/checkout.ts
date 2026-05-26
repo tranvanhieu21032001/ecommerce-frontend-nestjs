@@ -6,9 +6,13 @@ export type CheckoutItem = {
   quantity: number;
 };
 
-export type CreatePayOSOrderPayload = {
+export type PaymentMethod = "PAYOS" | "COD";
+
+export type CreateOrderPayload = {
   items?: CheckoutItem[];
   cartId?: string;
+  flashSaleReservationId?: string;
+  paymentMethod: PaymentMethod;
   shippingName?: string;
   shippingPhone?: string;
   shippingAddressLine1: string;
@@ -49,14 +53,13 @@ export type PayOSPaymentLink = {
   qrCode: string;
 };
 
-export async function createPayOSOrder(
-  payload: CreatePayOSOrderPayload,
+export async function createOrder(
+  payload: CreateOrderPayload,
 ): Promise<Order> {
   return apiRequest<Order>("/api/v1/orders", {
     method: "POST",
     body: {
       ...payload,
-      paymentMethod: "PAYOS",
       shippingCountry: "VN",
     },
   });

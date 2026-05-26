@@ -49,18 +49,20 @@ export function DashboardTable({
       </div>
 
       {showSkeleton ? (
-        <div className="grid gap-3 p-4">
-          {Array.from({ length: skeletonRows }).map((_, index) => (
-            <div
-              key={index}
-              className="h-[58px] animate-pulse rounded-xl bg-[#F3F4F6]"
-            />
-          ))}
+        <div className="sticky left-0 w-full">
+          <div className="grid gap-3 p-4">
+            {Array.from({ length: skeletonRows }).map((_, index) => (
+              <div
+                key={index}
+                className="h-[58px] animate-pulse rounded-xl bg-[#F3F4F6]"
+              />
+            ))}
+          </div>
         </div>
       ) : hasData ? (
         <div className="divide-y divide-[#E5E7EB]">{children}</div>
       ) : (
-        emptyState
+        <div className="sticky left-0 w-full">{emptyState}</div>
       )}
     </div>
   );

@@ -1,20 +1,32 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Loader2, QrCode, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  CheckCircle2,
+  Loader2,
+  QrCode,
+  XCircle,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useState } from "react";
 import QRCode from "qrcode";
 
 import { Button } from "@/components/ui/button";
 import {
   cancelOrder,
-  createPayOSOrder,
+  createOrder,
   createPayOSPaymentLink,
   type Order,
+  type PaymentMethod,
   type PayOSPaymentLink,
 } from "@/lib/api/checkout";
 import { getCart, type Cart } from "@/lib/api/cart";
+import {
+  getFlashSaleReservation,
+  type FlashSaleReservation,
+} from "@/lib/api/flash-sales";
 import { getProduct, getProducts, type Product } from "@/lib/api/products";
 
 type FormValues = {
@@ -30,14 +42,18 @@ export function CheckoutContent({
   initialVariationId,
   initialQuantity = 1,
   cartId,
+  flashSaleReservationId,
 }: {
   initialProductId?: string;
   initialVariationId?: string;
   initialQuantity?: number;
   cartId?: string;
+  flashSaleReservationId?: string;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Cart | null>(null);
+  const [flashReservation, setFlashReservation] =
+    useState<FlashSaleReservation | null>(null);
   const [formValues, setFormValues] = useState<FormValues>({
     productId: "",
     quantity: 1,
@@ -47,8 +63,10 @@ export function CheckoutContent({
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PAYOS");
   const [paymentLink, setPaymentLink] = useState<PayOSPaymentLink | null>(null);
   const [qrImage, setQrImage] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
   const selectedProduct = products.find(
     (product) => product.id === formValues.productId,
@@ -57,25 +75,58 @@ export function CheckoutContent({
     (variation) => variation.id === initialVariationId && variation.isActive,
   );
   const isCartCheckout = Boolean(cartId);
-  const total = isCartCheckout
+  const isFlashCheckout = Boolean(flashSaleReservationId);
+  const isFlashReservationActive = Boolean(
+    flashReservation &&
+      flashReservation.status === "ACTIVE" &&
+      new Date(flashReservation.expiresAt).getTime() > now,
+  );
+  const total = isFlashCheckout
+    ? (flashReservation?.item.salePrice ?? 0) * (flashReservation?.quantity ?? 0)
+    : isCartCheckout
     ? (cart?.subtotal ?? 0)
     : selectedProduct
       ? (selectedVariation?.price ?? selectedProduct.price) * formValues.quantity
       : 0;
   const hasWholeVndTotal = Number.isInteger(roundMoney(total));
-  const suggestedQuantity = !isCartCheckout && selectedProduct
+  const suggestedQuantity = !isCartCheckout && !isFlashCheckout && selectedProduct
     ? getPayOSQuantity({
         price: selectedVariation?.price ?? selectedProduct.price,
         stock: selectedVariation?.stock ?? selectedProduct.stock,
       })
     : null;
-  const hasCheckoutItems = isCartCheckout
+  const hasCheckoutItems = isFlashCheckout
+    ? isFlashReservationActive
+    : isCartCheckout
     ? Boolean(cart?.items.length)
     : Boolean(selectedProduct);
 
   useEffect(() => {
+    if (!isFlashCheckout) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isFlashCheckout]);
+
+  useEffect(() => {
     async function loadProducts() {
       try {
+        if (flashSaleReservationId) {
+          const reservation = await getFlashSaleReservation(flashSaleReservationId);
+          if (reservation.status !== "ACTIVE") {
+            throw new Error("Suat flash sale nay khong con kha dung.");
+          }
+          setFlashReservation(reservation);
+          return;
+        }
+
         if (cartId) {
           const response = await getCart();
 
@@ -158,7 +209,13 @@ export function CheckoutContent({
     }
 
     loadProducts();
-  }, [cartId, initialProductId, initialQuantity, initialVariationId]);
+  }, [
+    cartId,
+    flashSaleReservationId,
+    initialProductId,
+    initialQuantity,
+    initialVariationId,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,7 +253,7 @@ export function CheckoutContent({
       return;
     }
 
-    if (!hasWholeVndTotal) {
+    if (paymentMethod === "PAYOS" && !hasWholeVndTotal) {
       setError("PayOS yeu cau tong thanh toan la so nguyen VND.");
       return;
     }
@@ -209,7 +266,9 @@ export function CheckoutContent({
     setIsSubmitting(true);
 
     try {
-      const purchase = cartId
+      const purchase = flashSaleReservationId
+        ? { flashSaleReservationId }
+        : cartId
         ? { cartId }
         : {
             items: [
@@ -220,8 +279,9 @@ export function CheckoutContent({
               },
             ],
           };
-      const createdOrder = await createPayOSOrder({
+      const createdOrder = await createOrder({
         ...purchase,
+        paymentMethod,
         shippingName: String(formData.get("shippingName") ?? "").trim() || undefined,
         shippingPhone: String(formData.get("shippingPhone") ?? "").trim() || undefined,
         shippingAddressLine1: String(formData.get("shippingAddressLine1") ?? "").trim(),
@@ -231,6 +291,10 @@ export function CheckoutContent({
         notes: String(formData.get("notes") ?? "").trim() || undefined,
       });
       setOrder(createdOrder);
+      if (paymentMethod === "COD") {
+        return;
+      }
+
       const origin = window.location.origin;
       const link = await createPayOSPaymentLink(
         createdOrder.id,
@@ -241,7 +305,7 @@ export function CheckoutContent({
       setPaymentLink(link);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Khong the tao thanh toan VietQR.",
+        err instanceof Error ? err.message : "Khong the dat don hang.",
       );
     } finally {
       setIsSubmitting(false);
@@ -280,9 +344,9 @@ export function CheckoutContent({
 
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#3B9C3C]">
-            PayOS sandbox flow
+            Secure checkout
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#151515]">Thanh toan VietQR</h1>
+          <h1 className="mt-2 text-3xl font-bold text-[#151515]">Thanh toan don hang</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#52525B]">
             Don hang dang dung san pham that da chon tu cua hang hoac gio hang cua ban.
           </p>
@@ -300,6 +364,33 @@ export function CheckoutContent({
                   <Loader2 className="animate-spin" size={16} />
                   Dang tai san pham tu API...
                 </p>
+              ) : isFlashCheckout ? (
+                <div className="mt-4 rounded-lg border border-[#E5E7EB] p-3 text-sm">
+                  <p className="font-semibold text-[#151515]">
+                    {flashReservation?.item.product.name}
+                  </p>
+                  {flashReservation?.item.variation ? (
+                    <p className="mt-1 text-xs text-[#3B9C3C]">
+                      {formatOptionNames(flashReservation.item.variation)}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-red-600">
+                    {formatVnd(flashReservation?.item.salePrice ?? 0)} x{" "}
+                    {flashReservation?.quantity ?? 0}
+                  </p>
+                  <p className="mt-2 text-xs text-[#52525B]">
+                    Gia flash sale duoc giu den{" "}
+                    {flashReservation
+                      ? new Date(flashReservation.expiresAt).toLocaleTimeString("vi-VN")
+                      : "-"}
+                    .
+                  </p>
+                  {flashReservation && !isFlashReservationActive ? (
+                    <p className="mt-2 text-xs font-semibold text-red-600">
+                      Suat flash sale da het thoi gian giu.
+                    </p>
+                  ) : null}
+                </div>
               ) : isCartCheckout ? (
                 <div className="mt-4 space-y-3">
                   {cart?.items.map((item) => (
@@ -311,7 +402,7 @@ export function CheckoutContent({
                         <p className="font-semibold text-[#151515]">{item.product.name}</p>
                         {item.variation ? (
                           <p className="mt-1 text-xs text-[#3B9C3C]">
-                            {formatVariationLabel(item.variation)}
+                            {formatOptionNames(item.variation)}
                           </p>
                         ) : null}
                         <p className="mt-1 text-[#52525B]">
@@ -369,13 +460,13 @@ export function CheckoutContent({
                   </label>
                 </div>
               )}
-              {selectedProduct && suggestedQuantity && suggestedQuantity > 1 ? (
+              {!isFlashCheckout && selectedProduct && suggestedQuantity && suggestedQuantity > 1 ? (
                 <p className="mt-3 text-xs leading-5 text-[#52525B]">
                   Gia san pham trong database dang co phan le. He thong da goi y so
                   luong {suggestedQuantity} de tong tien la so nguyen VND ma PayOS chap nhan.
                 </p>
               ) : null}
-              {hasCheckoutItems && !hasWholeVndTotal ? (
+              {paymentMethod === "PAYOS" && hasCheckoutItems && !hasWholeVndTotal ? (
                 <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                   Tong tien hien tai co phan le. PayOS chi chap nhan so nguyen VND;
                   vui long dieu chinh so luong truoc khi tao QR.
@@ -405,7 +496,33 @@ export function CheckoutContent({
                   defaultValue="Ho Chi Minh"
                   required
                 />
-                <Field label="Ghi chu" name="notes" defaultValue="Thanh toan thu QR" />
+                <Field
+                  label="Ghi chu"
+                  name="notes"
+                  defaultValue="Giao hang trong gio hanh chinh"
+                />
+              </div>
+            </section>
+
+            <section className="border-t pt-6">
+              <h2 className="text-lg font-semibold text-[#151515]">Phuong thuc thanh toan</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <PaymentMethodOption
+                  checked={paymentMethod === "PAYOS"}
+                  description="Quet ma VietQR va thanh toan ngay."
+                  disabled={order?.status === "PENDING"}
+                  icon={<QrCode size={20} />}
+                  label="VietQR qua PayOS"
+                  onChange={() => setPaymentMethod("PAYOS")}
+                />
+                <PaymentMethodOption
+                  checked={paymentMethod === "COD"}
+                  description="Thanh toan bang tien mat khi nhan hang."
+                  disabled={order?.status === "PENDING"}
+                  icon={<Banknote size={20} />}
+                  label="Thanh toan khi nhan hang"
+                  onChange={() => setPaymentMethod("COD")}
+                />
               </div>
             </section>
 
@@ -423,16 +540,22 @@ export function CheckoutContent({
                 isSubmitting ||
                 order?.status === "PENDING" ||
                 !hasCheckoutItems ||
-                !hasWholeVndTotal
+                (paymentMethod === "PAYOS" && !hasWholeVndTotal)
               }
               className="flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <Loader2 className="animate-spin" size={18} />
+              ) : paymentMethod === "COD" ? (
+                <Banknote size={18} />
               ) : (
                 <QrCode size={18} />
               )}
-              {isSubmitting ? "Dang tao QR..." : "Tao ma QR thanh toan"}
+              {isSubmitting
+                ? "Dang dat hang..."
+                : paymentMethod === "COD"
+                  ? "Dat hang COD"
+                  : "Tao ma QR thanh toan"}
             </Button>
           </form>
 
@@ -442,23 +565,49 @@ export function CheckoutContent({
               <Summary
                 label="San pham"
                 value={
-                  isCartCheckout
-                    ? `${cart?.itemCount ?? 0} san pham`
+                  isFlashCheckout
+                    ? `${flashReservation?.item.product.name ?? "-"}${flashReservation?.item.variation ? ` - ${formatOptionNames(flashReservation.item.variation)}` : ""}`
+                    : isCartCheckout
+                      ? `${cart?.itemCount ?? 0} san pham`
                     : selectedProduct
-                      ? `${selectedProduct.name}${selectedVariation ? ` - ${formatVariationLabel(selectedVariation)}` : ""}`
+                      ? `${selectedProduct.name}${selectedVariation ? ` - ${formatOptionNames(selectedVariation)}` : ""}`
                       : "-"
                 }
               />
               {!isCartCheckout ? (
-                <Summary label="So luong" value={String(formValues.quantity)} />
+                <Summary
+                  label="So luong"
+                  value={String(
+                    isFlashCheckout ? (flashReservation?.quantity ?? 0) : formValues.quantity,
+                  )}
+                />
               ) : null}
               <Summary label="Tong cong" value={formatVnd(roundMoney(total))} strong />
+              <Summary
+                label="Thanh toan"
+                value={paymentMethod === "COD" ? "Khi nhan hang" : "VietQR PayOS"}
+              />
             </div>
 
-            {!paymentLink ? (
+            {order?.status === "PENDING" && paymentMethod === "COD" ? (
+              <div className="py-10 text-center text-sm text-[#52525B]">
+                <CheckCircle2 className="mx-auto mb-3 text-[#3B9C3C]" size={42} />
+                <p className="font-semibold text-[#151515]">Dat hang thanh cong</p>
+                <p className="mt-2">
+                  Ma don: <span className="font-semibold">{order.orderNumber}</span>
+                </p>
+                <p className="mt-2">Ban se thanh toan khi nhan hang.</p>
+              </div>
+            ) : !paymentLink ? (
               <div className="py-12 text-center text-sm text-[#52525B]">
-                <QrCode className="mx-auto mb-3 text-[#063C28]" size={36} />
-                QR se hien tai day sau khi tao thanh toan.
+                {paymentMethod === "COD" ? (
+                  <Banknote className="mx-auto mb-3 text-[#063C28]" size={36} />
+                ) : (
+                  <QrCode className="mx-auto mb-3 text-[#063C28]" size={36} />
+                )}
+                {paymentMethod === "COD"
+                  ? "Xac nhan don hang de thanh toan khi giao."
+                  : "QR se hien tai day sau khi tao thanh toan."}
               </div>
             ) : (
               <div className="pt-5 text-center">
@@ -550,6 +699,50 @@ function Field({
   );
 }
 
+function PaymentMethodOption({
+  checked,
+  description,
+  disabled,
+  icon,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  description: string;
+  disabled: boolean;
+  icon: ReactNode;
+  label: string;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      className={`flex gap-3 rounded-xl border p-4 transition-colors ${
+        checked
+          ? "border-[#3B9C3C] bg-[#F0FDF4]"
+          : "border-[#E5E7EB] bg-white"
+      } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+    >
+      <input
+        type="radio"
+        name="paymentMethod"
+        checked={checked}
+        disabled={disabled}
+        onChange={onChange}
+        className="mt-1 h-4 w-4 accent-[#3B9C3C]"
+      />
+      <span className="flex gap-3">
+        <span className="mt-0.5 text-[#063C28]">{icon}</span>
+        <span>
+          <span className="block text-sm font-semibold text-[#151515]">{label}</span>
+          <span className="mt-1 block text-xs leading-5 text-[#52525B]">
+            {description}
+          </span>
+        </span>
+      </span>
+    </label>
+  );
+}
+
 function Summary({
   label,
   value,
@@ -581,9 +774,7 @@ function getPayOSQuantity(product: Pick<Product, "price" | "stock">) {
   return quantity <= product.stock ? quantity : null;
 }
 
-function formatVariationLabel(
-  variation: NonNullable<Product["variations"]>[number],
-) {
+function formatOptionNames(variation: { options: Array<{ name: string }> }) {
   return variation.options.map((option) => option.name).join(" / ");
 }
 

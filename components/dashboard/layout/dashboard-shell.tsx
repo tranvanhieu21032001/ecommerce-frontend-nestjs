@@ -65,7 +65,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
   }
 
   const pageTitle =
-    pathname === "/dashboard/tags"
+    pathname === "/dashboard/orders"
+      ? "Order Management"
+      : pathname === "/dashboard/tags"
       ? "Tags"
       : pathname === "/dashboard/brands"
         ? "Brands"
@@ -75,6 +77,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
             ? "Variants"
             : pathname === "/dashboard/coupons"
               ? "Coupon Codes"
+              : pathname === "/dashboard/flash-sales"
+                ? "Flash Sales"
               : pathname === "/dashboard/products"
                 ? "Product List"
                 : pathname === "/dashboard/products/add"

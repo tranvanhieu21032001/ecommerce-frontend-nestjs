@@ -14,6 +14,7 @@ type CheckoutPageProps = {
     variationId?: string | string[];
     quantity?: string | string[];
     cartId?: string | string[];
+    flashSaleReservationId?: string | string[];
   }>;
 };
 
@@ -22,6 +23,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   const productId = readQueryValue(query.productId);
   const variationId = readQueryValue(query.variationId);
   const cartId = readQueryValue(query.cartId);
+  const flashSaleReservationId = readQueryValue(query.flashSaleReservationId);
   const requestedQuantity = Number(readQueryValue(query.quantity));
   const quantity =
     Number.isInteger(requestedQuantity) && requestedQuantity > 0
@@ -35,6 +37,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         initialVariationId={variationId}
         initialQuantity={quantity}
         cartId={cartId}
+        flashSaleReservationId={flashSaleReservationId}
       />
     </ShopShell>
   );

@@ -24,7 +24,7 @@ const sidebarSections: SidebarGroup[] = [
       },
       {
         label: "Order Management",
-        href: "#",
+        href: "/dashboard/orders",
         icon: () => <SidebarSvgIcon src="/icons/order.svg" />,
       },
       {
@@ -35,6 +35,11 @@ const sidebarSections: SidebarGroup[] = [
       {
         label: "Coupon Code",
         href: "/dashboard/coupons",
+        icon: () => <SidebarSvgIcon src="/icons/coupon.svg" />,
+      },
+      {
+        label: "Flash Sales",
+        href: "/dashboard/flash-sales",
         icon: () => <SidebarSvgIcon src="/icons/coupon.svg" />,
       },
       {
