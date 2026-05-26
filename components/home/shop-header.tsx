@@ -22,7 +22,11 @@ import { getCart } from "@/lib/api/cart";
 import { getOrders } from "@/lib/api/orders";
 import { getWishlist } from "@/lib/api/wishlist";
 import { headerLinks } from "@/lib/mock/home";
-import { CART_UPDATED_EVENT, WISHLIST_UPDATED_EVENT } from "@/lib/store-events";
+import {
+  CART_UPDATED_EVENT,
+  PROFILE_UPDATED_EVENT,
+  WISHLIST_UPDATED_EVENT,
+} from "@/lib/store-events";
 import { cn } from "@/lib/cn";
 
 export function ShopHeader() {
@@ -106,6 +110,22 @@ export function ShopHeader() {
 
     return () => {
       window.removeEventListener(WISHLIST_UPDATED_EVENT, updateWishlistCount);
+    };
+  }, []);
+
+  useEffect(() => {
+    async function updateProfile() {
+      try {
+        setUser(await getCurrentUser());
+      } catch {
+        setUser(null);
+      }
+    }
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, updateProfile);
+
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, updateProfile);
     };
   }, []);
 
@@ -281,14 +301,13 @@ function AccountMenu({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          aria-disabled="true"
+        <Link
+          href="/account"
           className="flex w-full items-center gap-4 border-b border-[#E5E7EB] px-6 py-4 text-left text-[13px] font-medium text-[#52525B] transition-colors hover:bg-[#FAFAFA]"
         >
           <Settings className="h-4 w-4 shrink-0" />
           Manage account
-        </button>
+        </Link>
         {user.role === "ADMIN" ? (
           <Link
             href="/dashboard"

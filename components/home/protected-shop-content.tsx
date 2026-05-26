@@ -21,6 +21,8 @@ export function ProtectedShopContent({
     details ??
     (pathname === "/wishlist"
       ? "Log in to see your wishlist and save the products you love. Don't miss your favorite deals!"
+      : pathname === "/account"
+        ? "Log in to update your account information and security settings."
       : undefined);
 
   useEffect(() => {
