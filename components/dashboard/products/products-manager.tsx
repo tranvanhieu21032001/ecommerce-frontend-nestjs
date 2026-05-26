@@ -294,6 +294,14 @@ export function ProductsManager() {
                 {product.isActive ? "Active" : "Inactive"}
               </span>
               <div className="flex justify-end gap-2">
+                <Link
+                  href={`/dashboard/products/edit/${product.id}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#BFDBFE] text-[#2563EB] transition-colors hover:bg-[#EFF6FF]"
+                  aria-label={`Edit ${product.name}`}
+                  title="Edit"
+                >
+                  <EditIcon />
+                </Link>
                 <button
                   type="button"
                   onClick={() => handleDelete(product)}
@@ -437,4 +445,28 @@ function formatMoney(value: number) {
     minimumFractionDigits: value % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function EditIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M4 20h4L19 9l-4-4L4 16v4Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m13.5 6.5 4 4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+    </svg>
+  );
 }

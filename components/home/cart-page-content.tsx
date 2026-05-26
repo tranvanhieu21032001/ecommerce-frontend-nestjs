@@ -54,7 +54,10 @@ export function CartPageContent() {
   }, []);
 
   async function updateQuantity(item: CartItem, change: number) {
-    const quantity = Math.max(1, Math.min(item.quantity + change, item.product.stock));
+    const quantity = Math.max(
+      1,
+      Math.min(item.quantity + change, item.variation?.stock ?? item.product.stock),
+    );
 
     if (quantity === item.quantity) {
       return;
@@ -62,7 +65,7 @@ export function CartPageContent() {
 
     setBusyProductId(item.product.id);
     try {
-      const response = await updateCartItem(item.product.id, quantity);
+      const response = await updateCartItem(item.product.id, quantity, item.variationId);
       setCart(response);
       notifyCartUpdated();
     } catch (err) {
@@ -72,10 +75,11 @@ export function CartPageContent() {
     }
   }
 
-  async function removeProduct(product: Product) {
+  async function removeProduct(item: CartItem) {
+    const { product } = item;
     setBusyProductId(product.id);
     try {
-      const response = await removeCartItem(product.id);
+      const response = await removeCartItem(product.id, item.variationId);
       setCart(response);
       notifyCartUpdated();
       toast.success(`${product.name} removed from cart.`);
@@ -168,6 +172,14 @@ export function CartPageContent() {
                             {product.category ?? "Uncategorized"}
                           </span>
                         </p>
+                        {item.variation ? (
+                          <p className="text-sm text-[#3B9C3C]">
+                            Option:{" "}
+                            <span className="font-semibold">
+                              {formatVariationLabel(item.variation)}
+                            </span>
+                          </p>
+                        ) : null}
                         <p className="hidden text-sm capitalize text-[#52525B] sm:block">
                           Status:{" "}
                           <span className="font-semibold text-[#151515]">
@@ -187,7 +199,7 @@ export function CartPageContent() {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => void removeProduct(product)}
+                          onClick={() => void removeProduct(item)}
                           aria-label={`Remove ${product.name} from cart`}
                           className="transition-colors hover:text-red-600 disabled:opacity-50"
                         >
@@ -199,7 +211,7 @@ export function CartPageContent() {
 
                   <div className="flex min-h-28 shrink-0 flex-col items-end justify-between py-1 md:min-h-40">
                     <p className="font-bold text-[#151515] md:text-lg">
-                      ${(product.price * quantity).toFixed(2)}
+                      ${(item.unitPrice * quantity).toFixed(2)}
                     </p>
                     <div className="flex items-center rounded-full border border-[#151515]/15 p-1">
                       <button
@@ -216,7 +228,7 @@ export function CartPageContent() {
                       </span>
                       <button
                         type="button"
-                        disabled={busy || quantity >= product.stock}
+                        disabled={busy || quantity >= (item.variation?.stock ?? product.stock)}
                         onClick={() => void updateQuantity(item, 1)}
                         aria-label={`Increase ${product.name} quantity`}
                         className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-[#F6F6F6] disabled:opacity-40"
@@ -246,7 +258,7 @@ export function CartPageContent() {
                 <SummaryRow label="Total" value={cart.subtotal} strong />
               </div>
               <Link
-                href="/checkout"
+                href={cart.id ? `/checkout?cartId=${encodeURIComponent(cart.id)}` : "/checkout"}
                 className="block w-full rounded-full bg-[#063C28] py-3 text-center font-semibold tracking-wide text-white transition-colors hover:bg-[#3B9C3C]"
               >
                 Proceed to Checkout
@@ -319,4 +331,10 @@ function getProductImage(product: Product) {
     product.imageUrl ??
     "/icons/product-list.svg"
   );
+}
+
+function formatVariationLabel(
+  variation: NonNullable<Product["variations"]>[number],
+) {
+  return variation.options.map((option) => option.name).join(" / ");
 }

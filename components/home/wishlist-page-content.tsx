@@ -139,7 +139,12 @@ export function WishlistPageContent() {
             </tr>
           </thead>
           <tbody>
-            {wishlist.items.map(({ id, product }) => (
+            {wishlist.items.map(({ id, product }) => {
+              const hasVariations = Boolean(
+                product.variations?.some((variation) => variation.isActive),
+              );
+
+              return (
               <tr key={id} className="border-b last:border-b-0">
                 <td className="flex min-w-72 items-center gap-2 px-3 py-4">
                   <button
@@ -188,17 +193,27 @@ export function WishlistPageContent() {
                   <PriceView price={product.price} className="whitespace-nowrap" />
                 </td>
                 <td className="p-3">
-                  <button
-                    type="button"
-                    disabled={busyProductId === product.id || product.stock === 0}
-                    onClick={() => void addToCart(product)}
-                    className="w-full rounded-full bg-[#063C28] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C] disabled:opacity-50"
-                  >
-                    {busyProductId === product.id ? "Adding..." : "Add to cart"}
-                  </button>
+                  {hasVariations ? (
+                    <Link
+                      href={`/shop/product/${product.id}`}
+                      className="block w-full rounded-full bg-[#063C28] px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C]"
+                    >
+                      Select options
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busyProductId === product.id || product.stock === 0}
+                      onClick={() => void addToCart(product)}
+                      className="w-full rounded-full bg-[#063C28] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C] disabled:opacity-50"
+                    >
+                      {busyProductId === product.id ? "Adding..." : "Add to cart"}
+                    </button>
+                  )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

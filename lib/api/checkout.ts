@@ -2,11 +2,13 @@ import { apiRequest } from "@/lib/api/client";
 
 export type CheckoutItem = {
   productId: string;
+  variationId?: string;
   quantity: number;
 };
 
 export type CreatePayOSOrderPayload = {
-  items: CheckoutItem[];
+  items?: CheckoutItem[];
+  cartId?: string;
   shippingName?: string;
   shippingPhone?: string;
   shippingAddressLine1: string;

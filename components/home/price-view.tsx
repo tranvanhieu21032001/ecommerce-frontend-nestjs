@@ -4,16 +4,18 @@ export function PriceView({
   price,
   discount,
   className,
+  priceClassName,
 }: {
   price: number;
   discount?: number;
   className?: string;
+  priceClassName?: string;
 }) {
   const discountedPrice = discount ? price - (price * discount) / 100 : price;
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <span className="font-bold text-[#063C28]">
+      <span className={cn("font-bold text-[#063C28]", priceClassName)}>
         ${discountedPrice.toFixed(2)}
       </span>
       {discount ? (

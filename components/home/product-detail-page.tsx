@@ -1,11 +1,10 @@
 import Image from "next/image";
-import { Star } from "lucide-react";
 import Link from "next/link";
 
-import { AddToCartButton } from "@/components/home/add-to-cart-button";
-import { PriceView } from "@/components/home/price-view";
+import { ProductPurchaseActions } from "@/components/home/product-purchase-actions";
 import { ProductSideMenu } from "@/components/home/product-side-menu";
 import { ShopContainer } from "@/components/home/shop-container";
+import { WishlistActionButton } from "@/components/home/wishlist-action-button";
 import type { HomeProduct } from "@/lib/mock/home";
 
 export function ProductDetailPage({ product }: { product: HomeProduct }) {
@@ -64,56 +63,18 @@ export function ProductDetailPage({ product }: { product: HomeProduct }) {
             {product.name}
           </h1>
 
-          <div className="mt-5 flex items-center gap-2">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, index) => (
-                <Star
-                  key={index}
-                  size={16}
-                  fill={index < 4 ? "#93D991" : "#ababab"}
-                  className={index < 4 ? "text-[#93D991]" : "text-[#ababab]"}
-                />
-              ))}
-            </div>
-            <p className="text-sm text-[#52525B]">5 Reviews</p>
-          </div>
-
-          <PriceView
-            price={product.price}
-            discount={product.discount}
-            className="mt-6 text-2xl"
-          />
+          <ProductPurchaseActions product={product} />
 
           <p className="mt-6 max-w-xl text-base leading-7 text-[#52525B]">
             A clean static product preview copied into the storefront style,
             ready to connect with the product detail API later.
           </p>
 
-          <div className="mt-6 flex items-center gap-2.5 text-sm">
-            <span className="font-medium">Availability:</span>
-            <span
-              className={
-                product.stock > 0
-                  ? "font-semibold text-[#063C28]"
-                  : "font-semibold text-red-600"
-              }
-            >
-              {product.stock > 0 ? `${product.stock} in stock` : "Unavailable"}
-            </span>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <AddToCartButton
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <WishlistActionButton
               productId={product.id}
               productName={product.name}
-              disabled={product.stock === 0}
             />
-            <Link
-              href="/wishlist"
-              className="rounded-full border border-[#063C28]/30 px-8 py-3 text-center text-sm font-semibold text-[#063C28] transition-colors hover:border-[#3B9C3C] hover:text-[#3B9C3C]"
-            >
-              View wishlist
-            </Link>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +11,13 @@ import { Input } from "@/components/ui/input";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { getBrands, type Brand } from "@/lib/api/brands";
 import { getCategories, type Category } from "@/lib/api/categories";
-import { createProduct, type ProductPayload } from "@/lib/api/products";
+import {
+  createProduct,
+  getProduct,
+  updateProduct,
+  type Product,
+  type ProductPayload,
+} from "@/lib/api/products";
 import { getTags, type Tag } from "@/lib/api/tags";
 import { uploadImage } from "@/lib/api/uploads";
 import { getVariants, type Variant } from "@/lib/api/variants";
@@ -68,13 +75,16 @@ const emptyForm: FormState = {
   isActive: true,
 };
 
-export function AddProductManager() {
+export function AddProductManager({ productId }: { productId?: string }) {
+  const router = useRouter();
+  const isEditing = Boolean(productId);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(isEditing);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [variationRows, setVariationRows] = useState<ProductVariationRow[]>([]);
@@ -91,20 +101,11 @@ export function AddProductManager() {
 
   useEffect(() => {
     loadOptions();
-  }, []);
-
-  useEffect(() => {
-    setVariationRows((currentRows) =>
-      buildVariationRows({
-        selectedIds: form.variantIds,
-        variants,
-        currentRows,
-        basePrice: form.price,
-        baseStock: form.stock,
-        baseSku: form.sku,
-      }),
-    );
-  }, [form.variantIds, form.price, form.stock, form.sku, variants]);
+    if (productId) {
+      loadProduct(productId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
 
   async function loadOptions() {
     setIsLoadingOptions(true);
@@ -112,10 +113,10 @@ export function AddProductManager() {
     try {
       const [categoryResponse, brandResponse, tagResponse, variantResponse] =
         await Promise.all([
-          getCategories({ isActive: true, page: 1, limit: 100 }),
-          getBrands({ isActive: true, page: 1, limit: 100 }),
-          getTags({ isActive: true, page: 1, limit: 100 }),
-          getVariants({ isActive: true, page: 1, limit: 200 }),
+          getCategories({ isActive: isEditing ? undefined : true, page: 1, limit: 100 }),
+          getBrands({ isActive: isEditing ? undefined : true, page: 1, limit: 100 }),
+          getTags({ isActive: isEditing ? undefined : true, page: 1, limit: 100 }),
+          getVariants({ isActive: isEditing ? undefined : true, page: 1, limit: 200 }),
         ]);
 
       setCategories(categoryResponse.data);
@@ -128,6 +129,22 @@ export function AddProductManager() {
       );
     } finally {
       setIsLoadingOptions(false);
+    }
+  }
+
+  async function loadProduct(id: string) {
+    setIsLoadingProduct(true);
+
+    try {
+      const product = await getProduct(id);
+      setForm(toFormState(product));
+      setVariationRows(toVariationRows(product));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not load product.",
+      );
+    } finally {
+      setIsLoadingProduct(false);
     }
   }
 
@@ -152,16 +169,22 @@ export function AddProductManager() {
   }
 
   function toggleVariant(variantId: string) {
-    setForm((current) => {
-      const hasVariant = current.variantIds.includes(variantId);
+    const hasVariant = form.variantIds.includes(variantId);
+    const variantIds = hasVariant
+      ? form.variantIds.filter((id) => id !== variantId)
+      : [...form.variantIds, variantId];
 
-      return {
-        ...current,
-        variantIds: hasVariant
-          ? current.variantIds.filter((id) => id !== variantId)
-          : [...current.variantIds, variantId],
-      };
-    });
+    setForm((current) => ({ ...current, variantIds }));
+    setVariationRows((currentRows) =>
+      buildVariationRows({
+        selectedIds: variantIds,
+        variants,
+        currentRows,
+        basePrice: form.price,
+        baseStock: form.stock,
+        baseSku: form.sku,
+      }),
+    );
   }
 
   function updateVariationRow(id: string, patch: Partial<ProductVariationRow>) {
@@ -271,13 +294,22 @@ export function AddProductManager() {
 
     setIsSaving(true);
     try {
-      await createProduct(payload);
-      toast.success("Product created successfully.");
-      setForm(emptyForm);
-      setVariationRows([]);
+      if (productId) {
+        await updateProduct(productId, payload);
+        toast.success("Product updated successfully.");
+        router.push("/dashboard/products");
+        router.refresh();
+      } else {
+        await createProduct(payload);
+        toast.success("Product created successfully.");
+        setForm(emptyForm);
+        setVariationRows([]);
+      }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not create product.",
+        err instanceof Error
+          ? err.message
+          : `Could not ${isEditing ? "update" : "create"} product.`,
       );
     } finally {
       setIsSaving(false);
@@ -376,11 +408,12 @@ export function AddProductManager() {
               Product
             </p>
             <h2 className="mt-1 text-[24px] font-black text-[color:var(--color-maintext)]">
-              Add product
+              {isEditing ? "Edit product" : "Add product"}
             </h2>
             <p className="mt-2 max-w-[620px] text-[14px] leading-6 text-[#6B7280]">
-              Create catalog items with inventory, category, brand, tags, and
-              media.
+              {isEditing
+                ? "Update catalog details, inventory, media, and variations."
+                : "Create catalog items with inventory, category, brand, tags, and media."}
             </p>
           </div>
 
@@ -390,6 +423,10 @@ export function AddProductManager() {
             <DashboardStat label="Variants" value={variants.length} />
           </div>
         </div>
+
+        {isLoadingProduct ? (
+          <p className="mt-6 text-sm text-[#7C8794]">Loading product details...</p>
+        ) : null}
 
         <form className="mt-6 grid gap-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 lg:grid-cols-[1fr_0.55fr]">
@@ -512,8 +549,12 @@ export function AddProductManager() {
               variant="default"
               className="sm:w-auto"
               onClick={() => {
-                setForm(emptyForm);
-                setVariationRows([]);
+                if (productId) {
+                  void loadProduct(productId);
+                } else {
+                  setForm(emptyForm);
+                  setVariationRows([]);
+                }
               }}
             >
               Reset
@@ -522,9 +563,15 @@ export function AddProductManager() {
               type="submit"
               variant="primary"
               className="sm:w-auto"
-              disabled={isSaving || isUploadingImage}
+              disabled={isSaving || isUploadingImage || isLoadingProduct}
             >
-              {isSaving ? "Creating..." : "Create product"}
+              {isSaving
+                ? isEditing
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditing
+                  ? "Update product"
+                  : "Create product"}
             </Button>
           </div>
         </form>
@@ -547,6 +594,64 @@ export function AddProductManager() {
         />
       </aside>
     </div>
+  );
+}
+
+function toFormState(product: Product): FormState {
+  const productImages =
+    product.images?.length
+      ? product.images.map((image) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          isPrimary: image.isPrimary,
+        }))
+      : product.imageUrl
+        ? [
+            {
+              id: `primary-${product.id}`,
+              imageUrl: product.imageUrl,
+              isPrimary: true,
+            },
+          ]
+        : [];
+
+  return {
+    name: product.name,
+    description: product.description ?? "",
+    price: String(product.price),
+    stock: String(product.stock),
+    sku: product.sku,
+    images: productImages,
+    categoryId: product.categoryId,
+    brandId: product.brand?.id ?? "",
+    tagIds: product.tags?.map((tag) => tag.id) ?? [],
+    variantIds: [
+      ...new Set(
+        product.variations?.flatMap((variation) =>
+          variation.options.map((option) => option.id),
+        ) ?? [],
+      ),
+    ],
+    isActive: product.isActive,
+  };
+}
+
+function toVariationRows(product: Product): ProductVariationRow[] {
+  return (
+    product.variations?.map((variation) => {
+      const variantIds = variation.options.map((option) => option.id);
+
+      return {
+        id: variation.id,
+        key: [...variantIds].sort().join("|"),
+        label: variation.options.map((option) => option.name).join(" / "),
+        variantIds,
+        price: String(variation.price),
+        stock: String(variation.stock),
+        sku: variation.sku ?? "",
+        isActive: variation.isActive,
+      };
+    }) ?? []
   );
 }
 

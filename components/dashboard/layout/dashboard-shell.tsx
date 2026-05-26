@@ -79,6 +79,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 ? "Product List"
                 : pathname === "/dashboard/products/add"
                   ? "Add Product"
+                  : pathname.startsWith("/dashboard/products/edit/")
+                    ? "Edit Product"
                   : "Dashboard";
 
   if (isLoading) {

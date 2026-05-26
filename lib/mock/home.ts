@@ -7,6 +7,18 @@ export type HomeProduct = {
   discount?: number;
   stock: number;
   status?: "sale" | "hot";
+  variations?: Array<{
+    id: string;
+    sku: string | null;
+    price: number;
+    stock: number;
+    isActive: boolean;
+    options: Array<{
+      id: string;
+      name: string;
+      attributes: Record<string, unknown>;
+    }>;
+  }>;
 };
 
 export type HomeCategory = {
@@ -33,7 +45,6 @@ export type HomeBlog = {
 export const headerLinks = [
   { title: "Home", href: "/" },
   { title: "Shop", href: "/shop" },
-  { title: "Blog", href: "#blog" },
   { title: "Hot Deal", href: "#products" },
 ];
 

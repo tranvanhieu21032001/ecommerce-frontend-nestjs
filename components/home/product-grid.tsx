@@ -150,5 +150,6 @@ function toHomeProduct(product: Product): HomeProduct {
     image: primaryImage,
     price: product.price,
     stock: product.stock,
+    variations: product.variations,
   };
 }

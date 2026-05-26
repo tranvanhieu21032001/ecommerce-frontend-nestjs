@@ -8,6 +8,7 @@ export type Product = {
   stock: number;
   sku: string;
   imageUrl: string | null;
+  categoryId: string;
   images?: Array<{
     id: string;
     imageUrl: string;
@@ -135,7 +136,10 @@ export async function getProduct(id: string): Promise<Product> {
   return apiRequest<Product>(`/api/v1/products/${id}`);
 }
 
-function cleanPayload(payload: ProductPayload): ProductPayload {
+function cleanPayload(
+  payload: ProductPayload,
+  preserveEmptyBrand = false,
+): ProductPayload {
   return {
     name: payload.name.trim(),
     description: payload.description?.trim() || undefined,
@@ -151,7 +155,9 @@ function cleanPayload(payload: ProductPayload): ProductPayload {
       }))
       .filter((image) => image.imageUrl),
     categoryId: payload.categoryId,
-    brandId: payload.brandId || undefined,
+    brandId: preserveEmptyBrand
+      ? (payload.brandId?.trim() ?? "")
+      : payload.brandId || undefined,
     tagIds: payload.tagIds?.filter(Boolean),
     variations: payload.variations,
     isActive: payload.isActive,
@@ -162,6 +168,16 @@ export async function createProduct(payload: ProductPayload): Promise<Product> {
   return apiRequest<Product>("/api/v1/products", {
     method: "POST",
     body: cleanPayload(payload),
+  });
+}
+
+export async function updateProduct(
+  id: string,
+  payload: ProductPayload,
+): Promise<Product> {
+  return apiRequest<Product>(`/api/v1/products/${id}`, {
+    method: "PATCH",
+    body: cleanPayload(payload, true),
   });
 }
 

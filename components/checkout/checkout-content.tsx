@@ -14,7 +14,8 @@ import {
   type Order,
   type PayOSPaymentLink,
 } from "@/lib/api/checkout";
-import { getProducts, type Product } from "@/lib/api/products";
+import { getCart, type Cart } from "@/lib/api/cart";
+import { getProduct, getProducts, type Product } from "@/lib/api/products";
 
 type FormValues = {
   productId: string;
@@ -24,8 +25,19 @@ type FormValues = {
 const fieldClassName =
   "mt-2 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm outline-none transition-colors focus:border-[#158947]";
 
-export function CheckoutContent() {
+export function CheckoutContent({
+  initialProductId,
+  initialVariationId,
+  initialQuantity = 1,
+  cartId,
+}: {
+  initialProductId?: string;
+  initialVariationId?: string;
+  initialQuantity?: number;
+  cartId?: string;
+}) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<Cart | null>(null);
   const [formValues, setFormValues] = useState<FormValues>({
     productId: "",
     quantity: 1,
@@ -41,19 +53,79 @@ export function CheckoutContent() {
   const selectedProduct = products.find(
     (product) => product.id === formValues.productId,
   );
-  const total = selectedProduct
-    ? selectedProduct.price * formValues.quantity
-    : 0;
+  const selectedVariation = selectedProduct?.variations?.find(
+    (variation) => variation.id === initialVariationId && variation.isActive,
+  );
+  const isCartCheckout = Boolean(cartId);
+  const total = isCartCheckout
+    ? (cart?.subtotal ?? 0)
+    : selectedProduct
+      ? (selectedVariation?.price ?? selectedProduct.price) * formValues.quantity
+      : 0;
   const hasWholeVndTotal = Number.isInteger(roundMoney(total));
-  const suggestedQuantity = selectedProduct
-    ? getPayOSQuantity(selectedProduct)
+  const suggestedQuantity = !isCartCheckout && selectedProduct
+    ? getPayOSQuantity({
+        price: selectedVariation?.price ?? selectedProduct.price,
+        stock: selectedVariation?.stock ?? selectedProduct.stock,
+      })
     : null;
+  const hasCheckoutItems = isCartCheckout
+    ? Boolean(cart?.items.length)
+    : Boolean(selectedProduct);
 
   useEffect(() => {
     async function loadProducts() {
       try {
+        if (cartId) {
+          const response = await getCart();
+
+          if (response.id !== cartId || response.items.length === 0) {
+            throw new Error("Gio hang thanh toan khong con san pham.");
+          }
+
+          setCart(response);
+          return;
+        }
+
+        if (initialProductId) {
+          const requestedProduct = await getProduct(initialProductId);
+          const hasVariations = Boolean(
+            requestedProduct.variations?.some((variation) => variation.isActive),
+          );
+          const requestedVariation = requestedProduct.variations?.find(
+            (variation) =>
+              variation.id === initialVariationId &&
+              variation.isActive &&
+              variation.stock > 0,
+          );
+
+          if (!requestedProduct.isActive || requestedProduct.stock <= 0) {
+            throw new Error("San pham da chon khong con kha dung de thanh toan.");
+          }
+          if (hasVariations && !requestedVariation) {
+            throw new Error("Vui long chon tuy chon san pham truoc khi thanh toan.");
+          }
+
+          setProducts([requestedProduct]);
+          setFormValues({
+            productId: requestedProduct.id,
+            quantity: Math.min(
+              initialQuantity,
+              requestedVariation?.stock ?? requestedProduct.stock,
+            ),
+          });
+          return;
+        }
+
         const response = await getProducts({ isActive: true, page: 1, limit: 100 });
-        const availableProducts = response.data.filter((product) => product.stock > 0);
+        const availableProducts = response.data.filter(
+          (product) =>
+            product.stock > 0 &&
+            !product.variations?.some((variation) => variation.isActive),
+        );
+
+        setProducts(availableProducts);
+
         const preferredProduct =
           availableProducts
             .map((product) => ({
@@ -70,7 +142,6 @@ export function CheckoutContent() {
                 right.product.price * right.quantity,
             )[0] ?? null;
 
-        setProducts(availableProducts);
         if (preferredProduct) {
           setFormValues({
             productId: preferredProduct.product.id,
@@ -87,7 +158,7 @@ export function CheckoutContent() {
     }
 
     loadProducts();
-  }, []);
+  }, [cartId, initialProductId, initialQuantity, initialVariationId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +191,12 @@ export function CheckoutContent() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedProduct || !hasWholeVndTotal) {
+    if (!hasCheckoutItems) {
+      setError("Khong co san pham nao de thanh toan.");
+      return;
+    }
+
+    if (!hasWholeVndTotal) {
       setError("PayOS yeu cau tong thanh toan la so nguyen VND.");
       return;
     }
@@ -133,8 +209,19 @@ export function CheckoutContent() {
     setIsSubmitting(true);
 
     try {
+      const purchase = cartId
+        ? { cartId }
+        : {
+            items: [
+              {
+                productId: selectedProduct!.id,
+                variationId: selectedVariation?.id,
+                quantity: formValues.quantity,
+              },
+            ],
+          };
       const createdOrder = await createPayOSOrder({
-        items: [{ productId: selectedProduct.id, quantity: formValues.quantity }],
+        ...purchase,
         shippingName: String(formData.get("shippingName") ?? "").trim() || undefined,
         shippingPhone: String(formData.get("shippingPhone") ?? "").trim() || undefined,
         shippingAddressLine1: String(formData.get("shippingAddressLine1") ?? "").trim(),
@@ -197,7 +284,7 @@ export function CheckoutContent() {
           </p>
           <h1 className="mt-2 text-3xl font-bold text-[#151515]">Thanh toan VietQR</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#52525B]">
-            Chon san pham that tu API, tao don PAYOS va hien thi QR ngay tren trang nay.
+            Don hang dang dung san pham that da chon tu cua hang hoac gio hang cua ban.
           </p>
         </div>
 
@@ -207,12 +294,36 @@ export function CheckoutContent() {
             className="space-y-6 rounded-2xl border border-[#151515]/10 bg-white p-6"
           >
             <section>
-              <h2 className="text-lg font-semibold text-[#151515]">San pham test</h2>
+              <h2 className="text-lg font-semibold text-[#151515]">San pham thanh toan</h2>
               {isLoadingProducts ? (
                 <p className="mt-4 flex items-center gap-2 text-sm text-[#52525B]">
                   <Loader2 className="animate-spin" size={16} />
                   Dang tai san pham tu API...
                 </p>
+              ) : isCartCheckout ? (
+                <div className="mt-4 space-y-3">
+                  {cart?.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between gap-4 rounded-lg border border-[#E5E7EB] p-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-semibold text-[#151515]">{item.product.name}</p>
+                        {item.variation ? (
+                          <p className="mt-1 text-xs text-[#3B9C3C]">
+                            {formatVariationLabel(item.variation)}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[#52525B]">
+                          {formatVnd(item.unitPrice)} x {item.quantity}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-[#151515]">
+                        {formatVnd(item.unitPrice * item.quantity)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_120px]">
                   <label className="text-sm font-medium text-[#151515]">
@@ -264,6 +375,12 @@ export function CheckoutContent() {
                   luong {suggestedQuantity} de tong tien la so nguyen VND ma PayOS chap nhan.
                 </p>
               ) : null}
+              {hasCheckoutItems && !hasWholeVndTotal ? (
+                <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                  Tong tien hien tai co phan le. PayOS chi chap nhan so nguyen VND;
+                  vui long dieu chinh so luong truoc khi tao QR.
+                </p>
+              ) : null}
             </section>
 
             <section className="border-t pt-6">
@@ -305,7 +422,7 @@ export function CheckoutContent() {
                 isLoadingProducts ||
                 isSubmitting ||
                 order?.status === "PENDING" ||
-                !selectedProduct ||
+                !hasCheckoutItems ||
                 !hasWholeVndTotal
               }
               className="flex items-center justify-center gap-2"
@@ -322,8 +439,19 @@ export function CheckoutContent() {
           <aside className="h-fit rounded-2xl border border-[#151515]/10 bg-white p-6">
             <h2 className="text-lg font-semibold text-[#151515]">Thanh toan</h2>
             <div className="mt-5 space-y-3 border-b pb-5 text-sm">
-              <Summary label="San pham" value={selectedProduct?.name ?? "-"} />
-              <Summary label="So luong" value={String(formValues.quantity)} />
+              <Summary
+                label="San pham"
+                value={
+                  isCartCheckout
+                    ? `${cart?.itemCount ?? 0} san pham`
+                    : selectedProduct
+                      ? `${selectedProduct.name}${selectedVariation ? ` - ${formatVariationLabel(selectedVariation)}` : ""}`
+                      : "-"
+                }
+              />
+              {!isCartCheckout ? (
+                <Summary label="So luong" value={String(formValues.quantity)} />
+              ) : null}
               <Summary label="Tong cong" value={formatVnd(roundMoney(total))} strong />
             </div>
 
@@ -443,7 +571,7 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function getPayOSQuantity(product: Product) {
+function getPayOSQuantity(product: Pick<Product, "price" | "stock">) {
   const cents = Math.round(product.price * 100) % 100;
   if (cents === 0) {
     return 1;
@@ -451,6 +579,12 @@ function getPayOSQuantity(product: Product) {
 
   const quantity = 100 / greatestCommonDivisor(cents, 100);
   return quantity <= product.stock ? quantity : null;
+}
+
+function formatVariationLabel(
+  variation: NonNullable<Product["variations"]>[number],
+) {
+  return variation.options.map((option) => option.name).join(" / ");
 }
 
 function greatestCommonDivisor(left: number, right: number): number {

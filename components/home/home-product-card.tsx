@@ -18,8 +18,14 @@ export function HomeProductCard({ product }: { product: HomeProduct }) {
   const router = useRouter();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const productHref = `/shop/product/${product.id}`;
+  const hasVariations = Boolean(product.variations?.some((variation) => variation.isActive));
 
   async function handleAddToCart() {
+    if (hasVariations) {
+      router.push(productHref);
+      return;
+    }
+
     setIsAddingToCart(true);
 
     try {
@@ -106,7 +112,11 @@ export function HomeProductCard({ product }: { product: HomeProduct }) {
         />
         <div className="mt-1 flex items-center gap-2">
           <Link
-            href="/checkout"
+            href={
+              hasVariations
+                ? productHref
+                : `/checkout?productId=${encodeURIComponent(product.id)}&quantity=1`
+            }
             className="flex h-9 flex-1 items-center justify-center rounded-full bg-[#063C28] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#3B9C3C]"
           >
             Buy now
@@ -115,7 +125,11 @@ export function HomeProductCard({ product }: { product: HomeProduct }) {
             type="button"
             onClick={() => void handleAddToCart()}
             disabled={isAddingToCart || product.stock === 0}
-            aria-label={`Add ${product.name} to cart`}
+            aria-label={
+              hasVariations
+                ? `Select options for ${product.name}`
+                : `Add ${product.name} to cart`
+            }
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#063C28]/30 text-[#063C28] transition-colors hover:border-[#3B9C3C] hover:bg-[#3B9C3C] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isAddingToCart ? (

@@ -14,8 +14,10 @@ import { priceRanges, type HomeProduct } from "@/lib/mock/home";
 
 export function ShopPageContent({
   initialCategoryId = null,
+  initialBrandId = null,
 }: {
   initialCategoryId?: string | null;
+  initialBrandId?: string | null;
 }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -23,7 +25,9 @@ export function ShopPageContent({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategoryId,
   );
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(
+    initialBrandId,
+  );
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -221,5 +225,6 @@ function toHomeProduct(product: Product): HomeProduct {
       "/icons/product-list.svg",
     price: product.price,
     stock: product.stock,
+    variations: product.variations,
   };
 }

@@ -11,15 +11,25 @@ const poppins = Poppins({
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categoryId?: string | string[] }>;
+  searchParams: Promise<{
+    categoryId?: string | string[];
+    brandId?: string | string[];
+  }>;
 }) {
-  const categoryId = (await searchParams).categoryId;
+  const query = await searchParams;
+  const categoryId = query.categoryId;
+  const brandId = query.brandId;
   const initialCategoryId =
     typeof categoryId === "string" ? categoryId : categoryId?.[0] ?? null;
+  const initialBrandId =
+    typeof brandId === "string" ? brandId : brandId?.[0] ?? null;
 
   return (
     <ShopShell className={poppins.className}>
-      <ShopPageContent initialCategoryId={initialCategoryId} />
+      <ShopPageContent
+        initialCategoryId={initialCategoryId}
+        initialBrandId={initialBrandId}
+      />
     </ShopShell>
   );
 }

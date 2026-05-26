@@ -52,5 +52,6 @@ function toHomeProduct(product: Product): HomeProduct {
       "/icons/product-list.svg",
     price: product.price,
     stock: product.stock,
+    variations: product.variations,
   };
 }
