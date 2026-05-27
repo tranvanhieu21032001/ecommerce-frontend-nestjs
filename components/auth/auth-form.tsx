@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FormEvent, useState } from "react";
+import Script from "next/script";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, register } from "@/lib/api/auth";
+import { googleLogin, login, register } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { GoogleCredentialResponse } from "@/lib/types/google-identity";
 
 type AuthMode = "login" | "register";
 
 type AuthFormProps = {
   mode: AuthMode;
 };
+
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 const modeConfig = {
   login: {
@@ -41,6 +45,59 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      if (!response.credential) {
+        setErrors({ form: "Google sign-in did not return a valid credential." });
+        return;
+      }
+
+      try {
+        setErrors({});
+        setIsGoogleSubmitting(true);
+        const authResponse = await googleLogin({ credential: response.credential });
+        router.replace(authResponse.user.role === "ADMIN" ? "/dashboard" : "/");
+        router.refresh();
+      } catch (error) {
+        setErrors({
+          form:
+            error instanceof Error
+              ? error.message
+              : "Google sign-in failed. Please try again.",
+        });
+      } finally {
+        setIsGoogleSubmitting(false);
+      }
+    },
+    [router],
+  );
+
+  const initializeGoogleButton = useCallback(() => {
+    if (!googleClientId || !window.google || !googleButtonRef.current) {
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: (response) => void handleGoogleCredential(response),
+    });
+    googleButtonRef.current.replaceChildren();
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      type: "icon",
+      shape: "circle",
+      theme: "outline",
+      size: "large",
+    });
+    setIsGoogleReady(true);
+  }, [handleGoogleCredential]);
+
+  useEffect(() => {
+    initializeGoogleButton();
+  }, [initializeGoogleButton]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -301,6 +358,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         <p className="mt-7 text-[12px] text-[#4B5563]">
           {mode === "login" ? "Login using" : "Register using"}
         </p>
+        {googleClientId ? (
+          <Script
+            src="https://accounts.google.com/gsi/client"
+            strategy="afterInteractive"
+            onLoad={initializeGoogleButton}
+          />
+        ) : null}
         <div className="mt-4 flex items-center justify-center gap-[34px]">
           <button
             type="button"
@@ -312,9 +376,25 @@ export function AuthForm({ mode }: AuthFormProps) {
           <button type="button" aria-label="Continue with Facebook">
             <FacebookIcon />
           </button>
-          <button type="button" aria-label="Continue with Google">
-            <GoogleIcon />
-          </button>
+          {googleClientId ? (
+            <div className="relative flex h-[40px] w-[40px] items-center justify-center">
+              <div
+                ref={googleButtonRef}
+                className={isGoogleSubmitting ? "pointer-events-none opacity-50" : ""}
+              />
+              {!isGoogleReady ? <GoogleIcon /> : null}
+            </div>
+          ) : (
+            <button
+              type="button"
+              aria-label="Continue with Google"
+              title="Set NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable Google sign-in."
+              disabled
+              className="opacity-50"
+            >
+              <GoogleIcon />
+            </button>
+          )}
         </div>
 
         <div className="mt-10 text-center text-[11px] text-[color:var(--color-subtext)]">

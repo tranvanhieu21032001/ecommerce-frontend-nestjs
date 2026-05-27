@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
+import { getCurrentUser, logout } from "@/lib/api/auth";
+import type { UserProfile } from "@/lib/types/user";
 import { DashboardSidebar } from "./dashboard-sidebar";
 
 type DashboardShellProps = {
@@ -13,7 +14,7 @@ type DashboardShellProps = {
 export function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { addCartItem } from "@/lib/api/cart";
 import { PriceView } from "@/components/home/price-view";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 import { notifyCartUpdated } from "@/lib/store-events";
 import { cn } from "@/lib/cn";
 

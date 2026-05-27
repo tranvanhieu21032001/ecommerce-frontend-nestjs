@@ -5,7 +5,7 @@ import { ProductDetailPage } from "@/components/home/product-detail-page";
 import { ShopShell } from "@/components/home/shop-shell";
 import { getProduct, type Product } from "@/lib/api/products";
 import { products } from "@/lib/mock/home";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 
 const poppins = Poppins({
   subsets: ["latin"],

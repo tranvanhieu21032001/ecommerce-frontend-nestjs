@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ProductSideMenu } from "@/components/home/product-side-menu";
 import { PriceView } from "@/components/home/price-view";
 import { addCartItem } from "@/lib/api/cart";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 import { notifyCartUpdated } from "@/lib/store-events";
 import { cn } from "@/lib/cn";
 

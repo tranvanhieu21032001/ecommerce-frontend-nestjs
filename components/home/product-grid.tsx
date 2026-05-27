@@ -8,7 +8,7 @@ import { HomeTabbar } from "@/components/home/home-tabbar";
 import { ShopContainer } from "@/components/home/shop-container";
 import { getCategories, type Category } from "@/lib/api/categories";
 import { getProducts, type Product } from "@/lib/api/products";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 
 export function ProductGrid() {
   const [categories, setCategories] = useState<Category[]>([]);

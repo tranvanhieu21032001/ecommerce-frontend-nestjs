@@ -10,7 +10,8 @@ import { Title } from "@/components/home/title";
 import { getBrands, type Brand } from "@/lib/api/brands";
 import { getCategories, type Category } from "@/lib/api/categories";
 import { getProducts, type Product } from "@/lib/api/products";
-import { priceRanges, type HomeProduct } from "@/lib/mock/home";
+import { priceRanges } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 
 export function ShopPageContent({
   initialSearch = "",

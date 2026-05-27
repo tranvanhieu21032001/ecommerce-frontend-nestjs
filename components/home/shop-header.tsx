@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 
 import { ShopContainer } from "@/components/home/shop-container";
 import { ShopSearch } from "@/components/home/shop-search";
-import { getCurrentUser, logout, type AuthUser } from "@/lib/api/auth";
+import { getCurrentUser, logout } from "@/lib/api/auth";
 import { getCart } from "@/lib/api/cart";
 import { getOrders } from "@/lib/api/orders";
 import { getWishlist } from "@/lib/api/wishlist";
@@ -28,11 +28,12 @@ import {
   WISHLIST_UPDATED_EVENT,
 } from "@/lib/store-events";
 import { cn } from "@/lib/cn";
+import type { UserProfile } from "@/lib/types/user";
 
 export function ShopHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
@@ -268,7 +269,7 @@ function AccountMenu({
   isLoggingOut,
   onLogout,
 }: {
-  user: AuthUser;
+  user: UserProfile;
   isLoggingOut: boolean;
   onLogout: () => void;
 }) {

@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Google Sign-In
+
+Create a Google OAuth 2.0 Web client and set its client ID in `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8800
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_web_client_id
+```
+
+Use the same Google Web client ID for `GOOGLE_CLIENT_ID` in the backend environment. Add `http://localhost:3000` to the client's authorized JavaScript origins for local development.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

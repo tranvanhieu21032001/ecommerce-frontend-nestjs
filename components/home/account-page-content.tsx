@@ -8,13 +8,13 @@ import { toast } from "sonner";
 import { ShopContainer } from "@/components/home/shop-container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getCurrentUser, type AuthUser } from "@/lib/api/auth";
+import { getCurrentUser } from "@/lib/api/auth";
 import {
   changeCurrentPassword,
   updateCurrentProfile,
-  type User,
 } from "@/lib/api/users";
 import { notifyProfileUpdated } from "@/lib/store-events";
+import type { UserProfile } from "@/lib/types/user";
 
 type ProfileForm = {
   firstName: string;
@@ -37,7 +37,7 @@ const emptyPasswordForm: PasswordForm = {
 };
 
 export function AccountPageContent() {
-  const [user, setUser] = useState<AuthUser | User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [profile, setProfile] = useState<ProfileForm | null>(null);
   const [password, setPassword] = useState<PasswordForm>(emptyPasswordForm);
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
@@ -405,7 +405,7 @@ function AccountShortcut({
   );
 }
 
-function toProfileForm(user: AuthUser | User): ProfileForm {
+function toProfileForm(user: UserProfile): ProfileForm {
   return {
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",

@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { addWishlistItem, removeWishlistItem } from "@/lib/api/wishlist";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 import { notifyWishlistUpdated } from "@/lib/store-events";
 import { toast } from "sonner";
 

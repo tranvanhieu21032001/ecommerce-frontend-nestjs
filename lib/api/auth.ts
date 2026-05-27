@@ -1,34 +1,11 @@
 import { apiRequest } from "@/lib/api/client";
-
-export type LoginPayload = {
-  email: string;
-  password: string;
-};
-
-export type RegisterPayload = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phoneNumber?: string;
-  birthday?: string;
-};
-
-export type AuthUser = {
-  id: string;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  birthday: string | null;
-  phoneNumber: string | null;
-  role: "USER" | "ADMIN" | string;
-};
-
-export type AuthResponse = {
-  status: boolean;
-  message: string;
-  user: AuthUser;
-};
+import type {
+  AuthResponse,
+  GoogleLoginPayload,
+  LoginPayload,
+  RegisterPayload,
+} from "@/lib/types/auth";
+import type { UserProfile } from "@/lib/types/user";
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
   return apiRequest<AuthResponse>("/api/v1/auth/login", {
@@ -46,6 +23,14 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
   });
 }
 
+export async function googleLogin(payload: GoogleLoginPayload): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>("/api/v1/auth/google", {
+    method: "POST",
+    body: payload,
+    skipAuthRefresh: true,
+  });
+}
+
 export async function logout(): Promise<{ status: boolean; message: string }> {
   return apiRequest<{ status: boolean; message: string }>("/api/v1/auth/logout", {
     method: "POST",
@@ -53,8 +38,8 @@ export async function logout(): Promise<{ status: boolean; message: string }> {
   });
 }
 
-export async function getCurrentUser(): Promise<AuthUser> {
-  const response = await apiRequest<{ status: boolean; message: string; user: AuthUser }>(
+export async function getCurrentUser(): Promise<UserProfile> {
+  const response = await apiRequest<{ status: boolean; message: string; user: UserProfile }>(
     "/api/v1/auth/me",
     { method: "GET" },
   );

@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { SvgIcon } from "@/components/ui/svg-icon";
 import { cn } from "@/lib/cn";
-import { deleteUser, getUsers, type User } from "@/lib/api/users";
+import { deleteUser, getUsers } from "@/lib/api/users";
+import type { User } from "@/lib/types/user";
 
 type RoleFilter = "all" | "admin" | "user";
 
@@ -41,10 +42,6 @@ export function UsersManager() {
     return () => window.clearTimeout(timeout);
   }, [search]);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const filteredUsers = useMemo(() => {
     const keyword = debouncedSearch.trim().toLowerCase();
 
@@ -63,9 +60,10 @@ export function UsersManager() {
   }, [debouncedSearch, roleFilter, users]);
 
   const totalPages = Math.max(Math.ceil(filteredUsers.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
   const visibleUsers = filteredUsers.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
   );
   const adminCount = useMemo(
     () => users.filter((user) => user.role === "ADMIN").length,
@@ -74,31 +72,34 @@ export function UsersManager() {
   const customerCount = Math.max(users.length - adminCount, 0);
 
   useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+    let active = true;
 
-  async function loadUsers() {
-    setIsLoading(true);
+    async function loadUsers() {
+      try {
+        const response = await getUsers();
 
-    try {
-      const response = await getUsers();
-      setUsers(response);
-      setSelectedUser((current) => {
-        if (!current) {
-          return response[0] ?? null;
+        if (active) {
+          setUsers(response);
+          setSelectedUser(response[0] ?? null);
         }
-
-        return response.find((user) => user.id === current.id) ?? null;
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load users.");
-    } finally {
-      setHasLoadedUsers(true);
-      setIsLoading(false);
+      } catch (err) {
+        if (active) {
+          toast.error(err instanceof Error ? err.message : "Could not load users.");
+        }
+      } finally {
+        if (active) {
+          setHasLoadedUsers(true);
+          setIsLoading(false);
+        }
+      }
     }
-  }
+
+    void loadUsers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleDelete(user: User) {
     const confirmed = window.confirm(`Delete user "${user.email}"?`);
@@ -234,10 +235,10 @@ export function UsersManager() {
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-[#7C8794]">
-            Page {page} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <Pagination
-            currentPage={page}
+            currentPage={currentPage}
             totalPages={totalPages}
             disabled={isLoading && !hasLoadedUsers}
             onPageChange={setPage}

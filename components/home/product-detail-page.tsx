@@ -5,7 +5,7 @@ import { ProductPurchaseActions } from "@/components/home/product-purchase-actio
 import { ProductSideMenu } from "@/components/home/product-side-menu";
 import { ShopContainer } from "@/components/home/shop-container";
 import { WishlistActionButton } from "@/components/home/wishlist-action-button";
-import type { HomeProduct } from "@/lib/mock/home";
+import type { HomeProduct } from "@/lib/types/storefront";
 
 export function ProductDetailPage({ product }: { product: HomeProduct }) {
   const relatedImages = [product.image, product.image, product.image];
